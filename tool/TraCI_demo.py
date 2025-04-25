@@ -12,21 +12,23 @@ if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
     sys.path.append(tools)
 else:
-    sys.exit("please declare environment variable 'SUMO_HOME'")
+    sys.exit("Please declare environment variable 'SUMO_HOME'")
 
 def run(args):
     teleports = []
     try:
         FILE = args[0]
         SIMULATION_END = int(args[1])
+        AREA = args[2]
     except:
         FILE = 0
         SIMULATION_END = 600
+        AREA = "kamppi"
     while traci.simulation.getTime() < SIMULATION_END:
         traci.simulationStep()
         teleports.append(traci.simulation.getStartingTeleportNumber())
 
-    with open(f"simulation_output/teleports_{FILE}.csv","w") as f:
+    with open(f"tool/{AREA}/simulation_output/teleports_{FILE}.csv","w") as f:
         f.write(f"timestep,teleports\n")
         for i in range(len(teleports)):
             f.write(f"{i},{teleports[i]}\n")
@@ -40,7 +42,7 @@ def get_options():
     optParser.add_option("--gui", action="store_true",
                          default=False, help="run the GUI version of sumo")
     optParser.add_option("--device.battery.probability 0.2", action="store_true",
-                         default=False, help="electrify the traffic")
+                         default=False, help="electrify the traffic by 20%")
     options, args = optParser.parse_args()
     return options,args
 
@@ -50,8 +52,8 @@ if __name__ == "__main__":
     # Run in GUI
     if options.gui:
         sumoBinary = checkBinary('sumo-gui')
-        traci.start([sumoBinary, '-c', 'TraCI_demo.sumocfg'])
+        traci.start([sumoBinary, '-c', 'tool/kamppi/kamppi.sumocfg'])
     # Run in CLI
     else:
-        traci.start(["sumo", '-c', 'TraCI_demo.sumocfg'])
+        traci.start(["sumo", '-c', 'tool/kamppi/kamppi.sumocfg'])
     run(args)

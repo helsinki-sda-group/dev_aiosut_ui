@@ -1,12 +1,11 @@
 import sys
 import xml.etree.ElementTree as ET
 
-SUMOCFG_FILE = "TraCI_demo.sumocfg"
-
 try:
     EMISSION_FILE_NAME = sys.argv[1]
+    SUMOCFG_FILE = sys.argv[2]
 except:
-    sys.exit("Please provide the emission output file name as an argument.")
+    sys.exit("Please provide the emission output and SUMO config file names as arguments.")
 
 def main():
     configXml = ET.parse(SUMOCFG_FILE)

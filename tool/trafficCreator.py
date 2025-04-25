@@ -6,14 +6,14 @@ import xml.etree.ElementTree as ET
 import re
 import numpy as np
 
-NET_FILE = "kamppi.net.xml"
+NET_FILE = "./tool/kamppi/kamppi.net.xml"
 try:
     NUMBER_OF_CARS = int(sys.argv[1])
     SIMULATION_END = int(sys.argv[2])
 except:
     SIMULATION_END = 600
     NUMBER_OF_CARS = 400
-ROU_FILE = "TraCI_demo.rou.xml"
+ROU_FILE = "./tool/kamppi/kamppi.rou.xml"
 
 NET = sumolib.net.readNet(NET_FILE)
 

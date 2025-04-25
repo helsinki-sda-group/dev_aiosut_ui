@@ -3,14 +3,13 @@
 import pandas as pd
 import numpy as np
 import sumolib
-import pyproj
 import xml.etree.ElementTree as et
 from difflib import SequenceMatcher as seq
 from functools import reduce
 # %%
-output = pd.read_csv("simulation_output/emissions_1.csv", sep=";")
-net = sumolib.net.readNet('kamppi.net.xml')
-teleports = pd.read_csv("simulation_output/teleports_1.csv")
+output = pd.read_csv("tool/kamppi/simulation_output/emissions_1.csv", sep=";")
+net = sumolib.net.readNet('tool/kamppi/kamppi.net.xml')
+teleports = pd.read_csv("tool/kamppi/simulation_output/teleports_1.csv")
 # %%
 lanes = pd.DataFrame(columns=['vehicle_lane','lon','lat'])
 for edge in net.getEdges(withInternal=False):
@@ -49,6 +48,9 @@ lanes = output[["vehicle_lane", "lon", "lat"]].drop_duplicates()
 full_output = full_output.merge(lanes, how='left')
 full_output["timestep"] = np.tile(np.repeat(np.arange(0, 60, dtype=int), 2), num_unique_output_lanes)
 full_output["vehicle_type"] = np.tile(["electric", "fuel"], 60*num_unique_output_lanes)
-full_output = full_output.merge(output, how='left', on=["timestep", "vehicle_type", "vehicle_lane", "lon", "lat"]).fillna(0)
-full_output = full_output.infer_objects()
-full_output.to_csv("new_data.csv")
+full_output = full_output.merge(output, how='left', on=["timestep", "vehicle_type", "vehicle_lane", "lon", "lat"])
+full_output.infer_objects()
+full_output["timestep"] = full_output['timestep'].astype(str).astype(int)
+numeric_cols = full_output.select_dtypes(include=['int', 'float']).columns
+full_output[numeric_cols] = full_output[numeric_cols].fillna(0)
+full_output.to_csv("tool/kamppi/simulation_output/clean_data.csv")

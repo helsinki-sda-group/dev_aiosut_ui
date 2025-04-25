@@ -2,13 +2,13 @@
 
     <input>
         <net-file value="kamppi.net.xml" />
-        <route-files value="TraCI_demo.rou.xml" />
+        <route-files value="kamppi.rou.xml" />
     </input>
 
     <output>
         <emission-output value="simulation_output/emissions_1.xml" />
         <netstate-dump value="simulation_output/plot_net_dump.xml" />
-	    <fcd-output value="simulation_output/test_fcdresults.xml" />
+	    <fcd-output value="simulation_output/test_fcdresults_1.xml" />
     </output>
 
 </configuration>
