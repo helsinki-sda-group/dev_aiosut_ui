@@ -21,7 +21,7 @@ The project follows a relaxed development pipeline by using issues, pull request
 
 1. Check out [the project roadmap](https://github.com/orgs/helsinki-sda-group/projects/3). P0 denotes the most urgent issues to be solved for the next milestone, P1 the next most urgent and so on. Milestones are used to keep track of the project-related deadlines, such as the workshops. Version releases denote the progress of the UI.
 2. Pick an issue to work on by assigning yourself to it.
-3. Update the issue and project roadmap regarding eg. the size of the task, start date and the estimated version release [according to the semantic versioning guidelines](https://semver.org/). A version number or a category (minor, major, patch) are both fine for the version release column in the roadmap.
+3. Update the issue and project roadmap. Use [the semantic versioning guidelines](https://semver.org/) for the release version column.
 4. Solve the issue as you see fit and submit a pull request.
 5. Wait patiently until the pull request is merged.
 6. Once merged, update the end date to the roadmap and enjoy your work's results! Sara will handle the rest of the roadmap, milestones and version releases ater you.
