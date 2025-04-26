@@ -19,7 +19,7 @@ AioSUT is a RCF-funded project about developing an AI-based optimization tool fo
 
 The project follows a relaxed development pipeline by using issues, pull requests and a project roadmap to keep track of features, bugs, version releases and milestones.
 
-1. Check out [the project roadmap](https://github.com/orgs/helsinki-sda-group/projects/3). P0 denotes the most urgent issues to be solved for the next milestone, P1 the next most urgent and so on. Milestones are used to keep track of the project-related deadlines, such as the workshops. Version releases denote the progress of the UI.
+1. Check out [the project roadmap](https://github.com/orgs/helsinki-sda-group/projects/3). P0 denotes the most urgent issues to be solved for the next milestone, P1 the next most urgent and so on. Milestones are used to keep track of the project-related deadlines, such as the workshops. Version releases denote the overall progress of the UI.
 2. Pick an issue to work on by assigning yourself to it.
 3. Update the issue and project roadmap. Use [the semantic versioning guidelines](https://semver.org/) for the release version column.
 4. Solve the issue as you see fit and submit a pull request.
