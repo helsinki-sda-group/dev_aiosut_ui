@@ -18,4 +18,4 @@ python "$SUMO_HOME/tools/xml/xml2csv.py" "./tool/kamppi/simulation_output/emissi
 python "./tool/aggregation.py"
 
 # Visualize the emission output
-python -m jupyter notebook "./tool/visualization.ipynb"
+python -m jupyter notebook "./tool/app.ipynb"
