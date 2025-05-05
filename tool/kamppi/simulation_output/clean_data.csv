@@ -1,4 +1,4 @@
-,vehicle_lane,lon,lat,timestep,vehicle_type,vehicle_noise,vehicle_CO,vehicle_CO2,vehicle_HC,vehicle_NOx,vehicle_PMx,amount
+,vehicle_lane,lon,lat,timestep,mobility_mode,vehicle_noise,vehicle_CO,vehicle_CO2,vehicle_HC,vehicle_NOx,vehicle_PMx,amount
 0,-101154827,24.92771090737302,60.16258061095071,0,electric,0.0,0.0,0.0,0.0,0.0,0.0,0.0
 1,-101154827,24.92771090737302,60.16258061095071,0,fuel,0.0,0.0,0.0,0.0,0.0,0.0,0.0
 2,-101154827,24.92771090737302,60.16258061095071,1,electric,0.0,0.0,0.0,0.0,0.0,0.0,0.0
