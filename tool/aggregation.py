@@ -8,11 +8,9 @@ from difflib import SequenceMatcher as seq
 from functools import reduce
 
 # %%
-output = pd.read_csv("/kamppi/simulation_output/emissions_1.csv", sep=";")
-net = sumolib.net.readNet("/kamppi/kamppi.net.xml")
-teleports = pd.read_csv("/kamppi/simulation_output/teleports_1.csv")
-
-print(output.head())
+output = pd.read_csv("./tool/kamppi/simulation_output/emissions_1.csv", sep=";")
+net = sumolib.net.readNet("./tool/kamppi/kamppi.net.xml")
+teleports = pd.read_csv("./tool/kamppi/simulation_output/teleports_1.csv")
 # %%
 lanes = pd.DataFrame(columns=["vehicle_lane", "lon", "lat"])
 for edge in net.getEdges(withInternal=False):
@@ -82,7 +80,7 @@ full_output = full_output.merge(
     output, how="left", on=["timestep", "vehicle_type", "vehicle_lane", "lon", "lat"]
 )
 full_output.infer_objects()
-full_output["timestep"] = full_output["timestep"].astype(str).astype(int)
+full_output["timestep"] = full_output["timestep"].astype(str).astype(int) + 1
 numeric_cols = full_output.select_dtypes(include=["int", "float"]).columns
 full_output[numeric_cols] = full_output[numeric_cols].fillna(0)
 full_output = full_output.rename(
