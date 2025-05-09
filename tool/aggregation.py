@@ -6,32 +6,50 @@ import sumolib
 import xml.etree.ElementTree as et
 from difflib import SequenceMatcher as seq
 from functools import reduce
+from shapely.geometry import Polygon, LineString
+import sys
 
 # %%
-output = pd.read_csv("./tool/kamppi/simulation_output/emissions_1.csv", sep=";")
-net = sumolib.net.readNet("./tool/kamppi/kamppi.net.xml")
-teleports = pd.read_csv("./tool/kamppi/simulation_output/teleports_1.csv")
+output = pd.read_csv("./kamppi/simulation_output/emissions_1.csv", sep=";")
+net = sumolib.net.readNet("./kamppi/kamppi.net.xml")
+teleports = pd.read_csv("./kamppi/simulation_output/teleports_1.csv")
 # %%
-lanes = pd.DataFrame(columns=["vehicle_lane", "lon", "lat"])
+edges = []
+lanes = []
+names = []
+lons = []
+lats = []
 for edge in net.getEdges(withInternal=False):
     edge_id = edge.getID()
-    raw_shape = edge.getShape()
-    shape = edge.getRawShape()
-    item = min(round(len(shape) / 2), 3)
-    x, y = shape[item][0], shape[item][1]
-    lon, lat = net.convertXY2LonLat(x, y)
-    lanes.loc[len(lanes)] = [edge_id, lon, lat]
+    lane_objs = edge.getLane()
+    print(lane_objs)
+    name = edge.getName()
+    points = edge.getShape()
+    if len(points) == 2:
+        shape = LineString(points)
+    else:
+        shape = Polygon(points)
+    lon, lat = net.convertXY2LonLat(shape.centroid.x, shape.centroid.y)
+    for lane_obj in lane_objs:
+        lane = edge.getLane(lane_obj)
+        print(lane)
+        edges.append(edge_id)
+        lanes.append(lane)
+        names.append(name)
+        lons.append(lon)
+        lats.append(lat)
+edge_lanes = pd.DataFrame(data={"Edge": edges, "Lane": lanes, "Name": names})
 # %%
-lane_to_edges = {}
-unique_lanes = list(output["vehicle_lane"].unique())
-unique_edges = list(lanes["vehicle_lane"].values)
-for lane in unique_lanes:
-    edge_ratios = []
-    for edge in unique_edges:
-        edge_ratios.append(seq(a=lane, b=edge).ratio())
-    lane_to_edges[lane] = unique_edges[np.argmax(edge_ratios)]
-output.replace({"vehicle_lane": lane_to_edges}, inplace=True)
-output = pd.merge(output, lanes, on="vehicle_lane")
+# lane_to_edges = {}
+# unique_lanes = list(output["vehicle_lane"].unique())
+# unique_edges = list(lanes["vehicle_lane"].values)
+# for lane in unique_lanes:
+#     edge_ratios = []
+#     for edge in unique_edges:
+#         edge_ratios.append(seq(a=lane, b=edge).ratio())
+#     lane_to_edges[lane] = unique_edges[np.argmax(edge_ratios)]
+# output.replace({"vehicle_lane": lane_to_edges}, inplace=True)
+output = pd.merge(output, edge_lanes, right_on="Lane", left_on="vehicle_lane")
 # %%
 bins = np.arange(0, 3660, 60, dtype=int)
 labels = np.arange(0, 60, dtype=int)
