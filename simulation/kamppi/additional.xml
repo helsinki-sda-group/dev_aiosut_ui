@@ -1,0 +1,1 @@
+<additional><edgeData file="./simulation_output/edge_noise_results.xml" period="1" type="harmonoise" id="edge-noise" /><laneData file="./simulation_output/lane_noise_results.xml" period="1" type="harmonoise" id="lane-noise" /></additional>

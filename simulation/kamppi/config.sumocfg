@@ -1,0 +1,1 @@
+<configuration><input><net-file value="./net.xml" /><route-files value="./rou.xml" /><additional-files value="/kamppi/additional.xml" /></input><output><output-prefix value="TIME_" /><tripinfo-output value="./trip_results.xml" /><emission-output value="./emission_results.xml" /></output></configuration>
