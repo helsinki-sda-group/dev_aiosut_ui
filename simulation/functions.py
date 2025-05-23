@@ -598,45 +598,34 @@ def runSimulation(
 def read_sumo_data(path):
     data = pd.read_csv(f"{path}", index_col=0)
     data = data.infer_objects()
-    data["Mobility mode"] = pd.Categorical(data["Mobility mode"], ordered=True)
-    data["Simulation timestep"] = pd.to_datetime(
-        data["Simulation timestep"], format="%M"
-    ).dt.minute
+    if "Mobility mode" in data.columns:
+        data["Mobility mode"] = pd.Categorical(data["Mobility mode"], ordered=True)
+    # data["Simulation timestep"] = pd.to_datetime(
+    # data["Simulation timestep"], format="%M"
+    # ).dt.minute
     return data
 
 
 # Datasets and column types
 def readData(area="kamppi"):
-    output_path = os.path.join(".", "simulation", str(area), "output")
-    current_emission_data = None
-    optimized_emission_data = None
-    current_lane_noise_data = None
-    optimized_lane_noise_data = None
-    current_edge_noise_data = None
-    optimized_edge_noise_data = None
-    current_trip_data = None
-    optimized_trip_data = None
-
-    for file in glob.glob(f"*.csv"):
+    output_path = os.path.join("simulation", str(area), "output")
+    datasets = {}
+    for file in glob.glob(f"{output_path}/*.csv"):
         if "emission" in file:
-            current_emission_data = read_sumo_data(os.path.join(output_path, file))
-            optimized_emission_data = read_sumo_data(os.path.join(output_path, file))
+            datasets["Current emissions"] = read_sumo_data(file)
+            datasets["Optimized emissions"] = read_sumo_data(file)
         elif "lane_noise" in file:
-            current_lane_noise_data = read_sumo_data(os.path.join(output_path, file))
-            optimized_lane_noise_data = read_sumo_data(os.path.join(output_path, file))
+            datasets["Current lane noise"] = read_sumo_data(file)
+            datasets["Optimized lane noise"] = read_sumo_data(file)
         elif "edge_noise" in file:
-            current_edge_noise_data = read_sumo_data(os.path.join(output_path, file))
-            optimized_edge_noise_data = read_sumo_data(os.path.join(output_path, file))
+            datasets["Current edge noise"] = read_sumo_data(file)
+            datasets["Optimized edge noise"] = read_sumo_data(file)
         elif "trip" in file:
-            current_trip_data = read_sumo_data(os.path.join(output_path, file))
-            optimized_trip_data = read_sumo_data(os.path.join(output_path, file))
-    return (
-        current_emission_data,
-        optimized_emission_data,
-        current_lane_noise_data,
-        optimized_lane_noise_data,
-        current_edge_noise_data,
-        optimized_edge_noise_data,
-        current_trip_data,
-        optimized_trip_data,
-    )
+            datasets["Current trips"] = read_sumo_data(file)
+            datasets["Optimized trips"] = read_sumo_data(file)
+
+    return datasets
+
+
+if __name__ == "__main__":
+    data = readData()
