@@ -32,7 +32,7 @@ def trip(
     destination,
     type="fuel",
 ):
-    return f"""\t<trip id="test_trip_{id}" type={type} depart="{departureTime}" from="{origin}" to="{destination}"/>\n"""
+    return f"""\t<trip id="test_trip_{id}" type="{type}" depart="{departureTime}" from="{origin}" to="{destination}"/>\n"""
 
 
 def randomTrip(
@@ -51,11 +51,10 @@ def randomTrip(
     f.write(vehicle())
     if electrify > 0:
         f.write(vehicle(type="electric", emissionClass="HBEFA4/PC_BEV"))
-    departures = []
     departures = random.sample(range(trip_start, trip_end), cars)
     not_electric = np.full(round(cars * (1.0 - electrify)), False, dtype=bool)
-    electric = np.full(len(cars) - len(not_electric), True, dtype=bool)
-    electric = np.random.shuffle(np.concatenate(not_electric, electric))
+    electric = np.full(cars - len(not_electric), True, dtype=bool)
+    electric = np.random.shuffle(np.concatenate((not_electric, electric)))
     departures = np.sort(departures)
     i = 0
     for departure in departures:
@@ -92,16 +91,13 @@ def randomTrip(
 
 def writeRoutes(
     cars,
-    area,
     trip_start,
     trip_end,
     electrify,
     seed,
+    net_file_path,
+    rou_file_path,
 ):
-    net_file_path = os.path.join(".", "simulation", str(area), "net.xml")
-    # net_file_path = (f"./tool/{area}/.net.xml",)
-    # rou_file_path = (f"./tool/{area}/.rou.xml",)
-    rou_file_path = os.path.join(".", "simulation", str(area), "rou.xml")
     net = sumolib.net.readNet(net_file_path)
 
     with open(rou_file_path, "w") as f:
@@ -119,8 +115,9 @@ def writeRoutes(
 
 
 # Aggregate the net
-def net_output(net):
-    tree = ET.parse(net)
+def net_output(net_path):
+    net = sumolib.net.readNet(net_path)
+    tree = ET.parse(net_path)
     edges = []
     names = []
     lanes = []
@@ -136,6 +133,8 @@ def net_output(net):
             # Iterate edges
             edge_id = edge.get("id")
             name = edge.get("name")
+            if name is None:
+                name = "Unnamed road"
             shape = edge.get("shape")
             if shape is not None:
                 points = shape.split()
@@ -162,7 +161,6 @@ def net_output(net):
             "Lane": lanes,
         }
     )
-    net_df.to_csv()
     return net_df
 
 
@@ -404,7 +402,7 @@ def emissions_output(file, net_df):
     veh_noises = []
 
     for time in root.iter("timestep"):
-        timestep = time.get("timestep")
+        timestep = time.get("time")
         for vehicle in time.iter("vehicle"):
             lane = vehicle.get("lane")
             veh_ids.append(vehicle.get("id"))
@@ -451,9 +449,9 @@ def aggregateOutputs(
     area="kamppi",
 ):
     # output_folder = f"./tool/{area}/output"
-    output_path = os.path.join(".", "simulation", area, "output")
+    output_path = os.path.join(".", "simulation", str(area), "output")
     # net_path = f"./tool/{area}/net.xml"
-    net_path = os.path.join(output_path, "net.xml")
+    net_path = os.path.join(".", "simulation", str(area), "input", "net.xml")
     print("Converting outputs...")
     net_df = net_output(net_path)
     for file in tqdm.tqdm(os.listdir(output_path)):
@@ -479,13 +477,13 @@ def aggregateOutputs(
 
 
 def runSimulation(
-    cars=2400,
+    cars=3000,
     simulation_end=3600,
     area="kamppi",
     trip_start=0,
-    trip_end=3550,
+    trip_end=3500,
     electrify=0.2,
-    seed=time.time(),
+    seed=123,
 ):
     # Sanity check
     if "SUMO_HOME" in os.environ:
@@ -495,17 +493,19 @@ def runSimulation(
         sys.exit("Please declare environment variable 'SUMO_HOME'")
 
     # Create directories for outputs and configurations
-    config_folder = os.path.join("simulation", str(area))
-    output_folder = os.path.join(str(config_folder), "output")
-    os.makedirs(config_folder, exist_ok=True)
-    os.makedirs(output_folder, exist_ok=True)
-    old_output_files = glob.glob(output_folder)
-    for file in old_output_files:
-        os.remove(file)
+    full_input_folder = os.path.join(".", "simulation", str(area), "input")
+    full_output_folder = os.path.join(".", "simulation", str(area), "output")
+    shutil.rmtree(full_output_folder)
+    os.makedirs(full_input_folder, exist_ok=True)
+    os.makedirs(full_output_folder, exist_ok=True)
+    # old_output_files = glob.glob(output_folder)
+    # for file in old_output_files:
+    # os.remove(file)
 
     # Create routes
     writeRoutes(
-        area=area,
+        rou_file_path=os.path.join(full_input_folder, "rou.xml"),
+        net_file_path=os.path.join(full_input_folder, "net.xml"),
         cars=cars,
         trip_start=trip_start,
         trip_end=trip_end,
@@ -514,43 +514,34 @@ def runSimulation(
     )
 
     # Create other configuration files
-    # additional_file_write = f"./tool/{area}/additional.xml"
-    additional_file_write = os.path.join(str(config_folder), "additional.xml")
-    # additional_file_value = f"./{area}/additional.xml"
-    additional_file_value = os.path.join(str(area), "additional.xml")
-    # net_file = f"./{area}/net.xml"
-    net_file = os.path.join(str(config_folder), "net.xml")
-    # route_file = f"./{area}/rou.xml"
-    route_file = os.path.join(str(config_folder), "rou.xml")
-    # config_file = f"./tool/{area}/config.sumocfg"
-    config_file = os.path.join(str(config_folder), "config.sumocfg")
-    # tripinfo_file = f"./{area}/output/trip_results.xml"
-    tripinfo_file = os.path.join(str(output_folder), "trip_results.xml")
-    # emission_file = f"./{area}/output/emission_results.xml"
-    emission_file = os.path.join(str(output_folder), "emission_results.xml")
-    # edge_noise_file = f"./output/edge_noise_results.xml"
-    edge_noise_file = os.path.join(str(output_folder), "edge_noise_results.xml")
-    # lane_noise_file = f"./output/lane_noise_results.xml"
-    lane_noise_file = os.path.join(str(output_folder), "lane_noise_results.xml")
+    additional_file_write = os.path.join(".", "simulation", str(area), "additional.xml")
+    additional_file_value = os.path.join("additional.xml")
+    net_file = os.path.join("input", "net.xml")
+    route_file = os.path.join("input", "rou.xml")
+    config_file_write = os.path.join(".", "simulation", str(area), "config.sumocfg")
+    tripinfo_file_value = os.path.join("output", "trip_results.xml")
+    emission_file_value = os.path.join("output", "emission_results.xml")
+    edge_noise_file_value = os.path.join("output", "edge_noise_results.xml")
+    # lane_noise_file_value = os.path.join("output", "lane_noise_results.xml")
 
     # Additional file
     additional_root = ET.Element("additional")
     ET.SubElement(
         additional_root,
         "edgeData",
-        file=edge_noise_file,
+        file=edge_noise_file_value,
         period="1",
         type="harmonoise",
         id="edge-noise",
     )
-    ET.SubElement(
-        additional_root,
-        "laneData",
-        file=lane_noise_file,
-        period="1",
-        type="harmonoise",
-        id="lane-noise",
-    )
+    # ET.SubElement(
+    #     additional_root,
+    #     "laneData",
+    #     file=lane_noise_file,
+    #     period="1",
+    #     type="harmonoise",
+    #     id="lane-noise",
+    # )
     additional_tree = ET.ElementTree(additional_root)
     additional_tree.write(additional_file_write)
 
@@ -570,14 +561,15 @@ def runSimulation(
     ET.SubElement(
         config_output,
         "tripinfo-output",
-        value=tripinfo_file,
+        value=tripinfo_file_value,
     )
-    ET.SubElement(config_output, "emission-output", value=emission_file)
+    ET.SubElement(config_output, "emission-output", value=emission_file_value)
     config_tree = ET.ElementTree(config_root)
-    config_tree.write(config_file)
+    config_tree.write(config_file_write)
 
     # Start the simulation with the above configuration files
-    traci.start(["sumo", "-c", config_file])
+    config_file_read = os.path.join(".", "simulation", str(area), "config.sumocfg")
+    traci.start(["sumo", "-c", config_file_read])
 
     while traci.simulation.getTime() < simulation_end:
         traci.simulationStep()
@@ -585,24 +577,23 @@ def runSimulation(
     traci.close()
 
     # Zip the output files
-    os.chdir(output_folder)
-    xml_output_files = glob.glob("*.xml*")
+    xml_output_files = glob.glob(f"{full_output_folder}/*.xml*")
     for filename in xml_output_files:
         with open(filename, "rb") as f_in:
             with gzip.open(f"{filename}.gz", "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)
         os.remove(filename)
+    return
 
 
 # Helper function to read data
 def read_sumo_data(path):
     data = pd.read_csv(f"{path}", index_col=0)
+    if "emission" in path or "trip" in path:
+        data["Amount"] = 1
     data = data.infer_objects()
     if "Mobility mode" in data.columns:
         data["Mobility mode"] = pd.Categorical(data["Mobility mode"], ordered=True)
-    # data["Simulation timestep"] = pd.to_datetime(
-    # data["Simulation timestep"], format="%M"
-    # ).dt.minute
     return data
 
 
@@ -614,18 +605,39 @@ def readData(area="kamppi"):
         if "emission" in file:
             datasets["Current emissions"] = read_sumo_data(file)
             datasets["Optimized emissions"] = read_sumo_data(file)
-        elif "lane_noise" in file:
-            datasets["Current lane noise"] = read_sumo_data(file)
-            datasets["Optimized lane noise"] = read_sumo_data(file)
+        # elif "lane_noise" in file:
+        #     datasets["Current lane noise"] = read_sumo_data(file)
+        #     datasets["Optimized lane noise"] = read_sumo_data(file)
         elif "edge_noise" in file:
             datasets["Current edge noise"] = read_sumo_data(file)
             datasets["Optimized edge noise"] = read_sumo_data(file)
         elif "trip" in file:
             datasets["Current trips"] = read_sumo_data(file)
             datasets["Optimized trips"] = read_sumo_data(file)
+    helper = datasets["Current emissions"]
+    helper = helper[["Simulation timestep", "Edge", "Amount"]]
+    helper = (
+        helper.groupby(["Simulation timestep", "Edge"])
+        .agg({"Amount": "sum"})
+        .reset_index()
+    )
+    datasets["Current edge noise"] = datasets["Current edge noise"].merge(
+        right=helper, on=["Simulation timestep", "Edge"]
+    )
+    # helper = datasets["Current emissions"]
+    # helper = helper[["Simulation timestep", "Lane", "Amount"]]
+    # helper = (
+    #     helper.groupby(["Simulation timestep", "Lane"])
+    #     .agg({"Amount": "sum"})
+    #     .reset_index()
+    # )
+    # datasets["Current lane noise"] = datasets["Current edge noise"].merge(
+    #     right=helper, on=["Simulation timestep", "Lane"]
+    # )
 
     return datasets
 
 
 if __name__ == "__main__":
-    data = readData()
+    runSimulation()
+    data = aggregateOutputs()
