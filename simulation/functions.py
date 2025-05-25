@@ -447,11 +447,14 @@ def emissions_output(file, net_df):
 # Read the simulation outputs and aggregate them
 def aggregateOutputs(
     area="kamppi",
+    situation="baseline",
 ):
     # output_folder = f"./tool/{area}/output"
-    output_path = os.path.join(".", "simulation", str(area), "output")
+    output_path = os.path.join(".", "simulation", str(area), str(situation), "output")
     # net_path = f"./tool/{area}/net.xml"
-    net_path = os.path.join(".", "simulation", str(area), "input", "net.xml")
+    net_path = os.path.join(
+        ".", "simulation", str(area), str(situation), "input", "net.xml"
+    )
     print("Converting outputs...")
     net_df = net_output(net_path)
     for file in tqdm.tqdm(os.listdir(output_path)):
@@ -481,9 +484,10 @@ def runSimulation(
     simulation_end=3600,
     area="kamppi",
     trip_start=0,
-    trip_end=3500,
+    trip_end=3200,
     electrify=0.2,
     seed=123,
+    situation="baseline",
 ):
     # Sanity check
     if "SUMO_HOME" in os.environ:
@@ -492,15 +496,16 @@ def runSimulation(
     else:
         sys.exit("Please declare environment variable 'SUMO_HOME'")
 
-    # Create directories for outputs and configurations
-    full_input_folder = os.path.join(".", "simulation", str(area), "input")
-    full_output_folder = os.path.join(".", "simulation", str(area), "output")
+    # Create directories for outputs and configurations, empty old outputs
+    full_input_folder = os.path.join(
+        ".", "simulation", str(area), str(situation), "input"
+    )
+    full_output_folder = os.path.join(
+        ".", "simulation", str(area), str(situation), "output"
+    )
     shutil.rmtree(full_output_folder)
     os.makedirs(full_input_folder, exist_ok=True)
     os.makedirs(full_output_folder, exist_ok=True)
-    # old_output_files = glob.glob(output_folder)
-    # for file in old_output_files:
-    # os.remove(file)
 
     # Create routes
     writeRoutes(
@@ -514,11 +519,15 @@ def runSimulation(
     )
 
     # Create other configuration files
-    additional_file_write = os.path.join(".", "simulation", str(area), "additional.xml")
+    additional_file_write = os.path.join(
+        ".", "simulation", str(area), str(situation), "additional.xml"
+    )
     additional_file_value = os.path.join("additional.xml")
     net_file = os.path.join("input", "net.xml")
     route_file = os.path.join("input", "rou.xml")
-    config_file_write = os.path.join(".", "simulation", str(area), "config.sumocfg")
+    config_file_write = os.path.join(
+        ".", "simulation", str(area), str(situation), "config.sumocfg"
+    )
     tripinfo_file_value = os.path.join("output", "trip_results.xml")
     emission_file_value = os.path.join("output", "emission_results.xml")
     edge_noise_file_value = os.path.join("output", "edge_noise_results.xml")
@@ -533,6 +542,7 @@ def runSimulation(
         period="1",
         type="harmonoise",
         id="edge-noise",
+        excludeEmpty="false",
     )
     # ET.SubElement(
     #     additional_root,
@@ -541,6 +551,7 @@ def runSimulation(
     #     period="1",
     #     type="harmonoise",
     #     id="lane-noise",
+    #     excludeEmpty = "false"
     # )
     additional_tree = ET.ElementTree(additional_root)
     additional_tree.write(additional_file_write)
@@ -563,12 +574,19 @@ def runSimulation(
         "tripinfo-output",
         value=tripinfo_file_value,
     )
-    ET.SubElement(config_output, "emission-output", value=emission_file_value)
+    ET.SubElement(
+        config_output,
+        "emission-output",
+        value=emission_file_value,
+        excludeEmpty="false",
+    )
     config_tree = ET.ElementTree(config_root)
     config_tree.write(config_file_write)
 
     # Start the simulation with the above configuration files
-    config_file_read = os.path.join(".", "simulation", str(area), "config.sumocfg")
+    config_file_read = os.path.join(
+        ".", "simulation", str(area), str(situation), "config.sumocfg"
+    )
     traci.start(["sumo", "-c", config_file_read])
 
     while traci.simulation.getTime() < simulation_end:
@@ -598,8 +616,8 @@ def read_sumo_data(path):
 
 
 # Datasets and column types
-def readData(area="kamppi"):
-    output_path = os.path.join("simulation", str(area), "output")
+def readData(area="kamppi", situation="baseline"):
+    output_path = os.path.join("simulation", str(area), str(situation), "output")
     datasets = {}
     for file in glob.glob(f"{output_path}/*.csv"):
         if "emission" in file:
