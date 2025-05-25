@@ -52,9 +52,10 @@ def randomTrip(
     if electrify > 0:
         f.write(vehicle(type="electric", emissionClass="HBEFA4/PC_BEV"))
     departures = random.sample(range(trip_start, trip_end), cars)
-    not_electric = np.full(round(cars * (1.0 - electrify)), False, dtype=bool)
-    electric = np.full(cars - len(not_electric), True, dtype=bool)
-    electric = np.random.shuffle(np.concatenate((not_electric, electric)))
+    fuel = np.full(round(cars * (1.0 - electrify)), False, dtype=bool)
+    electric = np.full(cars - len(fuel), True, dtype=bool)
+    electric_generator = np.concatenate((fuel, electric))
+    np.random.shuffle(electric_generator)
     departures = np.sort(departures)
     i = 0
     for departure in departures:
@@ -67,7 +68,7 @@ def randomTrip(
         originEdge = originEdgeStruct._id
         destinationEdge = destinationEdgeStruct._id
         strIndex = str(i)
-        if electric:
+        if electric_generator[i]:
             f.write(
                 trip(
                     id=strIndex,
