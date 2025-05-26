@@ -1,5 +1,5 @@
 # Imports and requirements
-python -m pip install -r "./tool/requirements.txt"
+python -m pip install -r "requirements.txt"
 
 # Python filepath for SUMO
 export PYTHONPATH="$SUMO_HOME/tools:$PYTHONPATH"
