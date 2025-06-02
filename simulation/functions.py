@@ -628,8 +628,8 @@ def readData(area="kamppi", situation="baseline"):
         #     datasets["Current lane noise"] = read_sumo_data(file)
         #     datasets["Optimized lane noise"] = read_sumo_data(file)
         elif "edge_noise" in file:
-            datasets["Current edge noise"] = read_sumo_data(file)
-            datasets["Optimized edge noise"] = read_sumo_data(file)
+            datasets["Current noise"] = read_sumo_data(file)
+            datasets["Optimized noise"] = read_sumo_data(file)
         elif "trip" in file:
             datasets["Current trips"] = read_sumo_data(file)
             datasets["Optimized trips"] = read_sumo_data(file)
