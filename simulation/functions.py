@@ -243,7 +243,7 @@ def full_output(file, net_df):
             "Carbon monoxide": veh_cos,
             "Hydrocarbon": veh_hcs,
             "Nitrogen oxides": veh_noxs,
-            "Coarse particles": veh_pmxs,
+            "Respirable particles": veh_pmxs,
             "Vehicles": lane_vehicles,
             "Average speed": lane_speeds,
         }
@@ -261,7 +261,7 @@ def full_output(file, net_df):
             "Carbon monoxide": veh_cos,
             "Hydrocarbon": veh_hcs,
             "Nitrogen oxides": veh_noxs,
-            "Coarse particles": veh_pmxs,
+            "Respirable particles": veh_pmxs,
             "Noise": veh_noises,
             "Fuel": veh_fuels,
             "Electricity": veh_elecs,
@@ -375,7 +375,7 @@ def trip_output(file):
             "Carbon monoxide": trip_cos,
             "Hydrocarbon": trip_hcs,
             "Nitrogen oxides": trip_noxs,
-            "Coarse particles": trip_pmxs,
+            "Respirable particles": trip_pmxs,
         }
     )
     return results
@@ -435,7 +435,7 @@ def emissions_output(file, net_df):
             "Carbon monoxide": veh_cos,
             "Hydrocarbon": veh_hcs,
             "Nitrogen oxides": veh_noxs,
-            "Coarse particles": veh_pmxs,
+            "Respirable particles": veh_pmxs,
             "Fuel": veh_fuels,
             "Electricity": veh_elecs,
             "Noise": veh_noises,
@@ -640,7 +640,7 @@ def readData(area="kamppi", situation="baseline"):
         .agg({"Amount": "sum"})
         .reset_index()
     )
-    datasets["Current edge noise"] = datasets["Current edge noise"].merge(
+    datasets["Current noise"] = datasets["Current noise"].merge(
         right=helper, on=["Simulation timestep", "Edge"]
     )
     # helper = datasets["Current emissions"]
