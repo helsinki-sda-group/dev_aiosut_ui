@@ -42,12 +42,7 @@ The project follows a relaxed development pipeline by using issues, pull request
     - the road network used in the simulation, `.net.xml`
     - the routes of the vehicles, `.rou.xml`
     - file configurations for the simulation, `.sumocfg`
-    - In each area folder, there is a sub-folder for the simulation outputs:
-      - the full vehicle and second-level output of the simulation, `test_fcdresults.xml`
-      - observed emissions, `emissions.csv` and `emissions.xml`
-      - a helper file for creating other outputs, `plot_net_dump.xml`
-      - teleports per timestep, `teleports.csv`
-      - a cleaned dataset used for the visualization, `clean_data.csv`
+    - In each area folder, there is a sub-folder `output` for the simulation outputs.
 
 ## License
 
