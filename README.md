@@ -29,12 +29,12 @@ The project follows a relaxed development pipeline by using issues, pull request
 
 ### Structure of the repository
 
-- `commands.sh` contains the command line script used to run the pipeline as a whole.
+- `commands.sh` contains the command line script used to run the tool for the first time.
 - `LICENSE` contains the info about the license this project is distributed under.
-- `requirements.txt` contains a list of the required Python libraries for running the project. The command line script uses this list to install them via the package installer.
-- The `simulation` folder contains the tool as a whole.
-  - `functions.py` contains all the necessary functions to run SUMO simulations and fetch the results.
-  - `app.ipynb` is used to produce the interactive visualisation.
+- `requirements.txt` contains a list of the required Python libraries for running the tool. The command line script uses this list to install them via the package installer.
+- `app.ipynb` is used as an interface for running the simulation tool and analysing the results.
+- The `simulation` folder contains the simulation loop as a whole.
+  - `functions.py` contains all the functions needed for runing SUMO simulations and fetching the results for visualization.
   - The sub-folders of the `simulation` folder, eg. `kamppi`, are area folders that contain the simulation configurations and simulation outputs for each area. The configurations consist mainly of three files:
     - the road network used in the simulation, `.net.xml`
     - the routes of the vehicles, `.rou.xml`
