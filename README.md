@@ -31,14 +31,11 @@ The project follows a relaxed development pipeline by using issues, pull request
 
 - `commands.sh` contains the command line script used to run the pipeline as a whole.
 - `LICENSE` contains the info about the license this project is distributed under.
-- The `tool` folder contains the tool as a whole.
-  - `requirements.txt` contains a list of the required Python libraries for running the project. The command line script uses this list to install them via the package installer.
-  - `aggregation.py` is used to process the raw output of SUMO into a clean dataset used for visualization.
-  - `emissionOutputSwitcher.py`is used change the location of the emission output files.
-  - `TraCI_demo.py` are used to configure TraCI to run SUMO and produce the results of the simulation
-  - `trafficCreator.py` is used to create traffic inside the simulation.
+- `requirements.txt` contains a list of the required Python libraries for running the project. The command line script uses this list to install them via the package installer.
+- The `simulation` folder contains the tool as a whole.
+  - `functions.py` contains all the necessary functions to run SUMO simulations and fetch the results.
   - `app.ipynb` is used to produce the interactive visualisation.
-  - The sub-folders of the `tool` folder, eg. `kamppi`, are area folders that contain the simulation configurations and simulation outputs for each area. The configurations consist mainly of three files:
+  - The sub-folders of the `simulation` folder, eg. `kamppi`, are area folders that contain the simulation configurations and simulation outputs for each area. The configurations consist mainly of three files:
     - the road network used in the simulation, `.net.xml`
     - the routes of the vehicles, `.rou.xml`
     - file configurations for the simulation, `.sumocfg`
