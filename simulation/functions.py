@@ -267,6 +267,7 @@ def full_output(file, net_df):
             "Electricity": veh_elecs,
         }
     )
+    vehicle_output["Amount"] = 1
     return lane_output, vehicle_output
 
 
@@ -378,6 +379,7 @@ def trip_output(file):
             "Respirable particles": trip_pmxs,
         }
     )
+    results["Amount"] = 1
     return results
 
 
@@ -441,6 +443,7 @@ def emissions_output(file, net_df):
             "Noise": veh_noises,
         }
     )
+    results["Amount"] = 1
     results = results.merge(net_df, on="Lane")
     return results
 
@@ -608,8 +611,6 @@ def runSimulation(
 # Helper function to read data
 def read_sumo_data(path):
     data = pd.read_csv(f"{path}", index_col=0)
-    if "emission" in path or "trip" in path:
-        data["Amount"] = 1
     data = data.infer_objects()
     if "Mobility mode" in data.columns:
         data["Mobility mode"] = pd.Categorical(data["Mobility mode"], ordered=True)
@@ -622,35 +623,35 @@ def readData(area="kamppi", situation="baseline"):
     datasets = {}
     for file in glob.glob(f"{output_path}/*.csv"):
         if "emission" in file:
-            datasets["Current emissions"] = read_sumo_data(file)
+            datasets["Baseline emissions"] = read_sumo_data(file)
             datasets["Optimized emissions"] = read_sumo_data(file)
         # elif "lane_noise" in file:
-        #     datasets["Current lane noise"] = read_sumo_data(file)
+        #     datasets["Baseline lane noise"] = read_sumo_data(file)
         #     datasets["Optimized lane noise"] = read_sumo_data(file)
         elif "edge_noise" in file:
-            datasets["Current noise"] = read_sumo_data(file)
+            datasets["Baseline noise"] = read_sumo_data(file)
             datasets["Optimized noise"] = read_sumo_data(file)
         elif "trip" in file:
-            datasets["Current trips"] = read_sumo_data(file)
+            datasets["Baseline trips"] = read_sumo_data(file)
             datasets["Optimized trips"] = read_sumo_data(file)
-    helper = datasets["Current emissions"]
-    helper = helper[["Simulation timestep", "Edge", "Amount"]]
+    helper = datasets["Baseline emissions"]
+    helper = helper[["Simulation timestep", "Edge", "Mobility flow"]]
     helper = (
         helper.groupby(["Simulation timestep", "Edge"])
-        .agg({"Amount": "sum"})
+        .agg({"Mobility flow": "sum"})
         .reset_index()
     )
-    datasets["Current noise"] = datasets["Current noise"].merge(
+    datasets["Baseline noise"] = datasets["Baseline noise"].merge(
         right=helper, on=["Simulation timestep", "Edge"]
     )
-    # helper = datasets["Current emissions"]
+    # helper = datasets["Baseline emissions"]
     # helper = helper[["Simulation timestep", "Lane", "Amount"]]
     # helper = (
     #     helper.groupby(["Simulation timestep", "Lane"])
     #     .agg({"Amount": "sum"})
     #     .reset_index()
     # )
-    # datasets["Current lane noise"] = datasets["Current edge noise"].merge(
+    # datasets["Baseline lane noise"] = datasets["Baseline edge noise"].merge(
     #     right=helper, on=["Simulation timestep", "Lane"]
     # )
 
@@ -658,5 +659,5 @@ def readData(area="kamppi", situation="baseline"):
 
 
 if __name__ == "__main__":
-    runSimulation()
+    # runSimulation()
     data = aggregateOutputs()
