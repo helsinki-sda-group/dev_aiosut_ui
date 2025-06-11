@@ -10,7 +10,7 @@ AioSUT is a RCF-funded project about developing an AI-based optimization tool fo
    - **Git for Windows, if using Windows**: Download the latest Git for Windows from [Git's official website](https://gitforwindows.org/).
 2. Clone the repository
 3. Run `sh commands.sh` in the command line in the root folder
-4. Once the `visualization.ipynb` opens in the browser, run All Cells of the notebook
+4. Once the `app.ipynb` opens in the browser, run All Cells of the notebook
 5. Success!
 
 ## Developer Guide
@@ -37,7 +37,7 @@ The project follows a relaxed development pipeline by using issues, pull request
   - `emissionOutputSwitcher.py`is used change the location of the emission output files.
   - `TraCI_demo.py` are used to configure TraCI to run SUMO and produce the results of the simulation
   - `trafficCreator.py` is used to create traffic inside the simulation.
-  - `visualization.ipynb` is used to produce the interactive visualisation.
+  - `app.ipynb` is used to produce the interactive visualisation.
   - The sub-folders of the `tool` folder, eg. `kamppi`, are area folders that contain the simulation configurations and simulation outputs for each area. The configurations consist mainly of three files:
     - the road network used in the simulation, `.net.xml`
     - the routes of the vehicles, `.rou.xml`

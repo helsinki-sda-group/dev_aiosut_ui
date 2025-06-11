@@ -1,9 +1,0 @@
-sumolib
-traci
-pandas
-numpy
-jupyter
-plotly
-dash
-dash_bootstrap_components
-dash_daq
