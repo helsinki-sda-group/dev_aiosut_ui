@@ -267,7 +267,7 @@ def full_output(file, net_df):
             "Electricity": veh_elecs,
         }
     )
-    vehicle_output["Amount"] = 1
+    vehicle_output["Mobility flow"] = 1
     return lane_output, vehicle_output
 
 
@@ -379,7 +379,7 @@ def trip_output(file):
             "Respirable particles": trip_pmxs,
         }
     )
-    results["Amount"] = 1
+    results["Mobility flow"] = 1
     return results
 
 
@@ -443,7 +443,7 @@ def emissions_output(file, net_df):
             "Noise": veh_noises,
         }
     )
-    results["Amount"] = 1
+    results["Mobility flow"] = 1
     results = results.merge(net_df, on="Lane")
     return results
 
@@ -453,9 +453,7 @@ def aggregateOutputs(
     area="kamppi",
     situation="baseline",
 ):
-    # output_folder = f"./tool/{area}/output"
     output_path = os.path.join(".", "simulation", str(area), str(situation), "output")
-    # net_path = f"./tool/{area}/net.xml"
     net_path = os.path.join(
         ".", "simulation", str(area), str(situation), "input", "net.xml"
     )
@@ -645,10 +643,10 @@ def readData(area="kamppi", situation="baseline"):
         right=helper, on=["Simulation timestep", "Edge"]
     )
     # helper = datasets["Baseline emissions"]
-    # helper = helper[["Simulation timestep", "Lane", "Amount"]]
+    # helper = helper[["Simulation timestep", "Lane", "Mobility flow"]]
     # helper = (
     #     helper.groupby(["Simulation timestep", "Lane"])
-    #     .agg({"Amount": "sum"})
+    #     .agg({"Mobility flow": "sum"})
     #     .reset_index()
     # )
     # datasets["Baseline lane noise"] = datasets["Baseline edge noise"].merge(
