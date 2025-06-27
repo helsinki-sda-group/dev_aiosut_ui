@@ -7,4 +7,3 @@ venv
 *.gz
 *.csv
 !simulation/scenarios/all_scenarios.csv
-!*.csv.gz
