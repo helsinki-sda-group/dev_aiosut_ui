@@ -1,6 +1,10 @@
 .ipynb_checkpoints
-*.csv
-infos.txt
-To-do.docx
-To-do UI – pikakuvake.lnk
 __pycache__
+venv
+*.pyc
+.DS_Store
+.env
+*.gz
+*.csv
+!simulation/scenarios/all_scenarios.csv
+!*.csv.gz
