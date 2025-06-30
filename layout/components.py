@@ -430,8 +430,8 @@ def scenario_parameters_section():
 
                 * *Season* controls the weather conditions - keeping the winters cool and summers hot! Bikers love it.
                 * *Time of week* refers to what day should be simulated. *Weekday* means it is time to hurry to work between Monday and Friday and *Weekend* is for that relaxed sightseeing on Saturday or Sunday.
-                * *Demand* decides how much mobility is going on. *Regular* projection refers to what one would expect to see based on the historical data; *Low* scales the regular projection down by 20%, while *High* increases it by 20%.
                 * *Area* changes what area is being simulated. Trying to take it all in all at once made our head spin (the AI's too), so we made a tour around the city instead.
+                * *Demand* decides how much mobility is going on. *Regular* projection refers to what one would expect to see based on the historical data; *Low* scales the regular projection down by 20%, while *High* increases it by 20%.
                 """,
             ),
             html.Div(
