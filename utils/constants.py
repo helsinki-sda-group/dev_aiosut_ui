@@ -21,6 +21,7 @@ OBJECTIVES = [
 ]
 SEASONS = [
     "Summer",
+    "Autumn",
     "Winter",
 ]
 WEEKDAYS = [
