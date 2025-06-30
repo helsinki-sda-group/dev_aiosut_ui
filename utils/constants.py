@@ -20,9 +20,10 @@ OBJECTIVES = [
     "Livability",
 ]
 SEASONS = [
-    "Summer",
-    "Autumn",
-    "Winter",
+    "Spring (Feb-Apr)"
+    "Summer (May-Aug)",
+    "Autumn (Sept-Oct)",
+    "Winter (Nov-Jan)",
 ]
 WEEKDAYS = [
     "Weekday",
