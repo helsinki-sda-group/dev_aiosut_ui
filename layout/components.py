@@ -154,15 +154,17 @@ def header_and_info_button_row(
     )
 
 
-def dropdown(options, value, id, style={"font-size": 18, "width": True}):
+def dropdown(options, value, id, dropdown_style={"margin": "auto",
+                   "text-align": "left"}, style={"font-size": "1.1em", "width": True}):
     return html.Div(
         dcc.Dropdown(
             options=options,
             value=value,
             id=id,
             optionHeight=50,
-            style=style,
-        )
+            style=dropdown_style,
+        ),
+        style=style
     )
 
 
@@ -324,7 +326,9 @@ def tab_layout(objective, variables):
                         options=variables,
                         value=variables[0],
                         id=f"crossfilter-{objective.lower()}-variable",
-                        style={"font-size": 18, "width": "25vw"},
+                        style={"font-size": "1em", "width": "25vw"},
+                        dropdown_style={"margin": "auto",
+                                        "text-align": "center"}
                     ),
                     icon_class="bi bi-search",
                     icon_style={
