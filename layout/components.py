@@ -160,6 +160,7 @@ def dropdown(options, value, id, style={"font-size": 18, "width": True}):
             options=options,
             value=value,
             id=id,
+            optionHeight=50,
             style=style,
         )
     )
