@@ -18,7 +18,7 @@ basic_style = {"paddingTop": "2vh", "paddingBottom": "2vh"}
 external_stylesheets = [dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP]
 
 
-def optimization_row(objective, icon_class):
+def _optimization_row(objective, icon_class):
     return dbc.Row(
         [
             dbc.Col(
@@ -69,7 +69,7 @@ def optimization_row(objective, icon_class):
     )
 
 
-def collapse(id, text):
+def _collapse(id, text):
     return html.Div(
         dbc.Collapse(
             dbc.Card(
@@ -87,7 +87,7 @@ def collapse(id, text):
     )
 
 
-def info_button(label, id):
+def _info_button(label, id):
     return (
         dbc.Button(
             label,
@@ -100,7 +100,7 @@ def info_button(label, id):
     )
 
 
-def header_and_info_button_row(
+def _header_and_info_button_row(
     header,
     button_label,
     button_id,
@@ -124,7 +124,7 @@ def header_and_info_button_row(
                     ),
                     dbc.Col(
                         html.Div(
-                            info_button(button_label, button_id),
+                            _info_button(button_label, button_id),
                         )
                     ),
                 ],
@@ -136,7 +136,7 @@ def header_and_info_button_row(
     )
 
 
-def dropdown(
+def _dropdown(
     options,
     id,
     dropdown_style={"margin": "auto", "textAlign": "left"},
@@ -155,7 +155,7 @@ def dropdown(
     )
 
 
-def icon_and_label(
+def _icon_and_label(
     label,
     html_for,
     icon_class=None,
@@ -190,7 +190,7 @@ def _viz_parameter_row():
                     # Situation buttons
                     html.Div(
                         [
-                            icon_and_label(
+                            _icon_and_label(
                                 label="Situation",
                                 html_for="crossfilter-situation",
                                 icon_class="bi bi-check-circle",
@@ -200,7 +200,7 @@ def _viz_parameter_row():
                                     "decorative": True,
                                 },
                             ),
-                            dropdown(
+                            _dropdown(
                                 options=SITUATIONS,
                                 id="crossfilter-situation",
                                 style={"font-size": "1.1em"},
@@ -215,7 +215,7 @@ def _viz_parameter_row():
                     # Variable dropdown
                     html.Div(
                         [
-                            icon_and_label(
+                            _icon_and_label(
                                 label="Variable",
                                 html_for="crossfilter-variable",
                                 icon_class="bi bi-search",
@@ -225,7 +225,7 @@ def _viz_parameter_row():
                                     "decorative": True,
                                 },
                             ),
-                            dropdown(
+                            _dropdown(
                                 options=TRAFFIC_VARIABLES,
                                 id="crossfilter-variable",
                                 style={"font-size": "1.1em"},
@@ -239,7 +239,7 @@ def _viz_parameter_row():
                     # Timestep interval
                     html.Div(
                         [
-                            icon_and_label(
+                            _icon_and_label(
                                 label="Temporal resolution",
                                 html_for="crossfilter-timestep",
                                 icon_class="bi bi-clock",
@@ -249,7 +249,7 @@ def _viz_parameter_row():
                                     "decorative": True,
                                 },
                             ),
-                            dropdown(
+                            _dropdown(
                                 options=TIMESTEPS,
                                 id="crossfilter-timestep",
                                 style={"font-size": "1.1em"},
@@ -263,7 +263,7 @@ def _viz_parameter_row():
                     # Temporal aggregation
                     html.Div(
                         [
-                            icon_and_label(
+                            _icon_and_label(
                                 label="Temporal aggregation",
                                 html_for="crossfilter-timeline-type",
                                 icon_class="bi bi-stack",
@@ -273,7 +273,7 @@ def _viz_parameter_row():
                                     "decorative": True,
                                 },
                             ),
-                            dropdown(
+                            _dropdown(
                                 options=TIMELINE_FUNCTIONS,
                                 id="crossfilter-timeline-type",
                                 style={"font-size": "1.1em"},
@@ -295,7 +295,7 @@ def viz_params():
     return html.Div(
         [
             html.Div(
-                header_and_info_button_row(
+                _header_and_info_button_row(
                     header=html.H3("Filters"),
                     button_label="Hold on a minute!",
                     button_id="filter-info-button",
@@ -308,7 +308,7 @@ def viz_params():
                     },
                 ),
             ),
-            collapse(
+            _collapse(
                 id="filter-info-collapse",
                 text="""
                     When you get your BIG dataset back, not every second needs to be recorded there as is, right?
@@ -434,14 +434,14 @@ def project_info():
     """Renders the project info section."""
     return html.Div(
         [
-            header_and_info_button_row(
+            _header_and_info_button_row(
                 header=html.H1(
                     "AI-based optimisation tool for sustainable urban planning (AIOSut)",
                 ),
                 button_label="Say what?",
                 button_id="project-info-button",
             ),
-            collapse(
+            _collapse(
                 id="project-info-collapse",
                 text="""
                 **AIOSut** is a Proof of Concept -project funded by the Research Council of Finland. The project's aim is to develop a prototype tool that utilizes AI-based scalable and generalisable models for urban planning optimization and features a visual interface that makes the use of the models and analysing of the results easy, without requiring AI knowledge from the user.
@@ -462,7 +462,7 @@ def _scenario_parameter_row():
                 dbc.Col(
                     html.Div(
                         [
-                            icon_and_label(
+                            _icon_and_label(
                                 label="Season",
                                 html_for="crossfilter-season",
                                 icon_class="bi bi-cloud-sun",
@@ -472,7 +472,7 @@ def _scenario_parameter_row():
                                     "decorative": True,
                                 },
                             ),
-                            dropdown(
+                            _dropdown(
                                 options=SEASONS,
                                 id="crossfilter-season",
                             ),
@@ -483,7 +483,7 @@ def _scenario_parameter_row():
                 dbc.Col(
                     html.Div(
                         [
-                            icon_and_label(
+                            _icon_and_label(
                                 label="Time of week",
                                 html_for="crossfilter-time",
                                 icon_class="bi bi-calendar-day",
@@ -493,7 +493,7 @@ def _scenario_parameter_row():
                                     "decorative": True,
                                 },
                             ),
-                            dropdown(
+                            _dropdown(
                                 options=WEEKDAYS,
                                 id="crossfilter-time",
                             ),
@@ -504,7 +504,7 @@ def _scenario_parameter_row():
                 dbc.Col(
                     html.Div(
                         [
-                            icon_and_label(
+                            _icon_and_label(
                                 label="Area",
                                 html_for="crossfilter-area",
                                 icon_class="bi bi-geo-alt",
@@ -514,7 +514,7 @@ def _scenario_parameter_row():
                                     "decorative": True,
                                 },
                             ),
-                            dropdown(
+                            _dropdown(
                                 options=AREAS,
                                 id="crossfilter-area",
                             ),
@@ -525,7 +525,7 @@ def _scenario_parameter_row():
                 dbc.Col(
                     html.Div(
                         [
-                            icon_and_label(
+                            _icon_and_label(
                                 label="Demand",
                                 html_for="crossfilter-demand",
                                 icon_class="bi bi-graph-up",
@@ -535,7 +535,7 @@ def _scenario_parameter_row():
                                     "decorative": True,
                                 },
                             ),
-                            dropdown(
+                            _dropdown(
                                 options=MOBILITY_DEMAND,
                                 id="crossfilter-demand",
                             ),
@@ -553,7 +553,7 @@ def _scenario_parameter_row():
 def scenario_parameters():
     return html.Div(
         [
-            header_and_info_button_row(
+            _header_and_info_button_row(
                 header=html.H2("Scenario parameters"),
                 icon_class="bi bi-map",
                 icon_style={
@@ -565,7 +565,7 @@ def scenario_parameters():
                 button_label="What do these do?",
                 button_id="scenario-info-button",
             ),
-            collapse(
+            _collapse(
                 id="scenario-info-collapse",
                 text="""
                 These buttons build your very own simulated city ("scenario" for short)!
@@ -587,7 +587,7 @@ def optimization_parameters():
     """Renders the optimization parameters section."""
     return html.Div(
         [
-            header_and_info_button_row(
+            _header_and_info_button_row(
                 header=html.H2("Optimization parameters"),
                 icon_class="bi bi-gear",
                 icon_style={
@@ -599,7 +599,7 @@ def optimization_parameters():
                 button_id="optimization-info-button",
                 button_label="Now you lost me!",
             ),
-            collapse(
+            _collapse(
                 id="optimization-info-collapse",
                 text="""
                 Tuning *Priority* to your liking before pressing **Simulate** makes the AI do your personal bidding in the city renovation! Priority signals to AI how important the objective is for you. When the AI runs into a tie, the most important objective wins the round and the optimization game continues. Note that air quality and livability go hand in hand, as air quality is the only variable we play with for livability formulas.
@@ -614,19 +614,19 @@ def optimization_parameters():
                 },
             ),
             html.Div(
-                optimization_row(
+                _optimization_row(
                     objective=OBJECTIVES[1],
                     icon_class="bi bi-car-front-fill",
                 ),
             ),
             html.Div(
-                optimization_row(
+                _optimization_row(
                     objective=OBJECTIVES[2],
                     icon_class="bi bi-wind",
                 ),
             ),
             html.Div(
-                optimization_row(
+                _optimization_row(
                     objective=OBJECTIVES[3],
                     icon_class="bi bi-house-heart-fill",
                 ),
@@ -721,7 +721,7 @@ def results_tabs():
     """Renders the results tabs."""
     return html.Div(
         [
-            header_and_info_button_row(
+            _header_and_info_button_row(
                 header=html.H2("Results"),
                 icon_class="bi bi-bar-chart-line",
                 icon_style={
@@ -733,7 +733,7 @@ def results_tabs():
                 button_id="results-info-button",
                 button_label="Explain, please!",
             ),
-            collapse(
+            _collapse(
                 id="results-info-collapse",
                 text="""
                 There is a lot going on in the city - a bit too much, which is why we brought you tabs. *Summary* lets you see the big picture "before" (*Baseline*) and "after" (*Optimized*) the AI renovation, while the other tabs – *Traffic*, *Air quality* and *Livability* – zoom in one objective and different variables related to that objective.
