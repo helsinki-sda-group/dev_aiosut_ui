@@ -85,7 +85,7 @@ def normalize_range(array, x, y):
 
 # Helper function to read data
 def read_data(path):
-    data = pd.read_csv(f"{path}", index_col=0, compression="gzip")
+    data = pd.read_csv(f"{path}", index_col=0)
     data = data.infer_objects()
     if "Mobility mode" in data.columns:
         data["Mobility mode"] = pd.Categorical(data["Mobility mode"], ordered=True)
@@ -99,78 +99,72 @@ def get_data(
     season="summer",
     time="weekday",
     situation="baseline",
-    optimization="equal",
+    optimization=None,
+    variable="Mobility flow",
 ):
     """
-    Slices and copies the required data from the original dataset.
+    Slices the required data from the dataset written on the disk.
     """
-    baseline_output_path = os.path.join(
-        "simulation",
-        "scenarios",
-        area,
-        f"{demand}_{season}_{time}",
-        str(situation),
-    )
-    optimized_output_path = os.path.join(
-        "simulation",
-        "scenarios",
-        str(area),
-        f"{demand}_{season}_{time}",
-        f"{situation}_{optimization}",
-    )
-    print(baseline_output_path)
-    datasets = {}
-    for file in glob.glob(f"{baseline_output_path}/*.csv.gz*"):
-        print(file)
-        if "emission" in file:
-            datasets["Baseline emissions"] = read_data(file)
-        # elif "lane_noise" in file:
-        #     datasets["Baseline lane noise"] = read_sumo_data(file)
-        elif "edge_noise" in file:
-            datasets["Baseline noise"] = read_data(file)
-        elif "trip" in file:
-            datasets["Baseline trips"] = read_data(file)
-    helper = datasets["Baseline emissions"]
-    helper = helper[["Simulation timestep", "Edge", "Mobility flow"]]
-    helper = (
-        helper.groupby(["Simulation timestep", "Edge"])
-        .agg({"Mobility flow": "sum"})
-        .reset_index()
-    )
-    datasets["Baseline noise"] = datasets["Baseline noise"].merge(
-        right=helper, on=["Simulation timestep", "Edge"]
-    )
-    for file in glob.glob(f"{optimized_output_path}/*.csv.gz*"):
-        if "emission" in file:
-            datasets["Optimized emissions"] = read_data(file)
-        # elif "lane_noise" in file:
-        #     datasets["Optimized lane noise"] = read_sumo_data(file)
-        elif "edge_noise" in file:
-            datasets["Optimized noise"] = read_data(file)
-        elif "trip" in file:
-            datasets["Optimized trips"] = read_data(file)
-    helper = datasets["Baseline emissions"]
-    helper = helper[["Simulation timestep", "Edge", "Mobility flow"]]
-    helper = (
-        helper.groupby(["Simulation timestep", "Edge"])
-        .agg({"Mobility flow": "sum"})
-        .reset_index()
-    )
-    datasets["Baseline noise"] = datasets["Baseline noise"].merge(
-        right=helper, on=["Simulation timestep", "Edge"]
-    )
-    # helper = datasets["Baseline emissions"]
-    # helper = helper[["Simulation timestep", "Lane", "Mobility flow"]]
-    # helper = (
-    #     helper.groupby(["Simulation timestep", "Lane"])
-    #     .agg({"Mobility flow": "sum"})
-    #     .reset_index()
-    # )
-    # datasets["Baseline lane noise"] = datasets["Baseline edge noise"].merge(
-    #     right=helper, on=["Simulation timestep", "Lane"]
-    # )
-
-    return datasets
+    dataset_name, dataset_cols = uc.FROM_VAR_TO_DATA_COLS[variable]
+    if situation.lower() == "optimized":
+        output_path = os.path.join(
+            # ".",
+            "simulation",
+            "scenarios",
+            f"{area.lower()}",
+            f"{demand.lower()}_{season.lower()}_{time.lower()}",
+            f"{situation.lower()}_{uc.OPTIMIZATION[optimization]}",
+            f"{dataset_name}.csv.gz",
+        )
+    else:
+        output_path = os.path.join(
+            # ".",
+            "simulation",
+            "scenarios",
+            f"{area.lower()}",
+            f"{demand.lower()}_{season.lower()}_{time.lower()}",
+            f"{situation.lower()}",
+            f"{dataset_name}.csv.gz",
+        )
+    dataset = read_data(output_path)[dataset_cols]
+    print(dataset.head())
+    if "noise" in dataset_name:
+        helper_dataset_name, _ = uc.FROM_SITU_VAR_TO_DATA_COLS[
+            (situation, "Carbon dioxide")
+        ]
+        if situation == "optimized":
+            helper_output_path = os.path.join(
+                # ".",
+                "simulation",
+                "scenarios",
+                f"{area.lower()}",
+                f"{demand.lower()}_{season.lower()}_{time.lower()}",
+                f"{situation.lower()}_{uc.OPTIMIZATION[optimization]}",
+                f"{helper_dataset_name}.csv.gz",
+            )
+        else:
+            helper_output_path = os.path.join(
+                # ".",
+                "simulation",
+                "scenarios",
+                f"{area.lower()}",
+                f"{demand.lower()}_{season.lower()}_{time.lower()}",
+                f"{situation.lower()}",
+                f"{helper_dataset_name}.csv.gz",
+            )
+        helper_dataset = read_data(helper_output_path)
+        helper_dataset = helper_dataset[
+            ["Simulation timestep", "Edge", "Mobility flow"]
+        ]
+        helper_dataset = (
+            helper_dataset.groupby(["Simulation timestep", "Edge"])
+            .agg({"Mobility flow": "sum"})
+            .reset_index()
+        )
+        dataset = dataset.merge(
+            right=helper_dataset, on=["Simulation timestep", "Edge"]
+        )
+    return dataset
 
 
 def create_heatmap(network, variable):
@@ -208,7 +202,7 @@ def create_heatmap(network, variable):
         clickmode="event+select",
         sliders=sliders,
         map_bounds=map_bounds(network=network),
-        labels=uc.LABELS,
+        # labels=uc.LABELS,
     )
     # Sets the variable name and its unit as a legend to the color bar
     heatmap.layout["coloraxis"]["colorbar"][
@@ -217,7 +211,7 @@ def create_heatmap(network, variable):
     return heatmap
 
 
-def create_mobility_mode_avg_bar_plot(network, variable, labels={}):
+def create_mobility_mode_avg_bar_plot(network, variable):
     """Creates a horizontal mobility mode -specific bar plot of averages."""
     bar_plot = px.bar(
         data_frame=network,
@@ -235,7 +229,7 @@ def create_mobility_mode_avg_bar_plot(network, variable, labels={}):
         xaxis_title=f"Average {variable.lower()} ({uc.UNITS[variable]})",
         yaxis_title="Mobility mode",
         xaxis=dict(range=[0, network[variable].max() * 1.1]),
-        labels=labels,
+        # labels=uc.LABELS,
     )
     return bar_plot
 
@@ -255,7 +249,7 @@ def create_area_chart(network, variable):
     area_plot.update_layout(
         title_x=0.11,
         yaxis_title=f"{variable} ({uc.UNITS[variable]})",
-        labels=uc.LABELS,
+        # labels=uc.LABELS,
     )
     # Output the plot
     return area_plot
@@ -271,7 +265,7 @@ def create_mobility_mode_histogram(network, variable):
         yaxis_title=uc.UNITS[variable],
         bargap=0.2,
         xaxis_title=f"{variable}",
-        labels=uc.LABELS,
+        # labels=uc.LABELS,
     )
     # Output the plot
     return histogram

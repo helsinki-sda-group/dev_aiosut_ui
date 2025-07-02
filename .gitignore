@@ -6,4 +6,5 @@ venv
 .env
 *.gz
 *.csv
+!*.csv.gz
 !simulation/scenarios/all_scenarios.csv

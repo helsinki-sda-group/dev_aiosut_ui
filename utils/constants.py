@@ -9,48 +9,70 @@ MOBILITY_MODES = [
     "Buses",
     "Trams",
 ]
-SITUATIONS = [
-    "Baseline",
-    "Optimized",
-]
 OBJECTIVES = [
     "Summary",
     "Traffic",
     "Air quality",
     "Livability",
 ]
+# Marks and values for optimization sliders
+OPTIMIZATION_SLIDER_MARKS = {0: "Equal", 1: "First", 2: "Second"}
+OPTIMIZATION_SLIDER_VALUES = {
+    0: "equal",
+    1: "traffic1",
+    2: "traffic2",
+}
+TIMESTEPS = [
+    {"label": "Every minute", "value": 1},
+    {"label": "Every quarter", "value": 15},
+    {"label": "Every half an hour", "value": 30},
+    {"label": "Every hour", "value": 60},
+]
+SITUATIONS = [
+    {"label": "Baseline", "value": "baseline"},
+    {"label": "Optimized", "value": "optimized"},
+]
+# Dropdowns
 SEASONS = [
-    "Spring (Feb-Apr)",
-    "Summer (May-Aug)",
-    "Autumn (Sept-Oct)",
-    "Winter (Nov-Jan)",
+    {"label": "Spring (Feb-Apr)", "value": "spring", "disabled": True},
+    {"label": "Summer (May-Aug)", "value": "summer", "disabled": True},
+    {"label": "Autumn (Sept-Oct)", "value": "autumn"},
+    {"label": "Winter (Nov-Jan)", "value": "winter", "disabled": True},
 ]
 WEEKDAYS = [
-    "Weekday",
-    "Weekend",
+    {"label": "Weekday", "value": "Weekday"},
+    {"label": "Weekend", "value": "Weekend", "disabled": True},
 ]
 MOBILITY_DEMAND = [
-    "Low",
-    "Regular",
-    "High",
+    {"label": "Low", "value": "low", "disabled": True},
+    {"label": "Regular", "value": "regular"},
+    {"label": "High", "value": "high", "disabled": True},
 ]
 AREAS = [
-    "Arabia",
-    "Jätkäsaari",
-    "Kamppi",
-    "Vihdintie",
+    {"label": "Arabia", "value": "arabia", "disabled": True},
+    {"label": "Jätkäsaari", "value": "high", "disabled": True},
+    {"label": "Kamppi", "value": "kamppi"},
+    {"label": "Vihdintie", "value": "vihdintie", "disabled": True},
 ]
-TIMELINE_OPTIONS = ["Average", "Sum"]
-TIMELINE_FUNCTIONS = {"Average": "mean", "Sum": "sum"}
+TIMELINE_FUNCTIONS = [
+    {"label": "Average", "value": "mean"},
+    {"label": "Sum", "value": "sum"},
+]
 AQ_VARIABLES = [
-    "Carbon monoxide",
-    "Carbon dioxide",
-    "Hydrocarbon",
-    "Nitrogen oxides",
-    "Respirable particles",
-    "Fine particles",
+    {"label": "Carbon monoxide", "value": "Carbon monoxide"},
+    {"label": "Carbon dioxide", "value": "Carbon dioxide"},
+    {"label": "Hydrocarbon", "value": "Hydrocarbon"},
+    {"label": "Nitrogen oxides", "value": "Nitrogen oxides"},
+    {"label": "Respirable particles", "value": "Respirable particles"},
+    {"label": "Fine particles", "value": "Fine particles", "disabled": True},
 ]
-TRAFFIC_VARIABLES = ["Mobility flow", "Speed", "Travel time", "Lost time", "Noise"]
+TRAFFIC_VARIABLES = [
+    {"label": "Mobility flow", "value": "Mobility flow"},
+    {"label": "Speed", "value": "Speed"},
+    {"label": "Travel time", "value": "Travel time"},
+    {"label": "Lost time", "value": "Lost time"},
+    {"label": "Noise", "value": "Noise"},
+]
 
 # AQ index parameters
 AQI_INDEX_THRESHOLDS = [0, 10, 25, 50, 75, np.inf]
@@ -75,14 +97,10 @@ UNITS = {
 }
 
 # From variable-situation-to-dataset-columns mapping for filtering
-# (Situation, variable) -> (dataset, [list of columns])
-FROM_SITU_VAR_TO_DATA_COLS = {
-    ("Baseline", "Trips"): (
-        "Baseline trips",
-        ["Travel time", "Lost time", "Mobility mode", "Mobility flow"],
-    ),
-    ("Baseline", "Mobility flow"): (
-        "Baseline emissions",
+# Variable -> (dataset, [list of columns])
+FROM_VAR_TO_DATA_COLS = {
+    "Mobility flow": (
+        "emission_results",
         [
             "Name",
             "Edge",
@@ -94,8 +112,8 @@ FROM_SITU_VAR_TO_DATA_COLS = {
             "Vehicle",
         ],
     ),
-    ("Baseline", "Speed"): (
-        "Baseline emissions",
+    "Speed": (
+        "emission_results",
         [
             "Name",
             "Edge",
@@ -107,16 +125,16 @@ FROM_SITU_VAR_TO_DATA_COLS = {
             "Speed",
         ],
     ),
-    ("Baseline", "Travel time"): (
-        "Baseline trips",
+    "Travel time": (
+        "trip_results",
         ["Mobility mode", "Travel time", "Mobility flow"],
     ),
-    ("Baseline", "Lost time"): (
-        "Baseline trips",
+    "Lost time": (
+        "trip_results",
         ["Mobility mode", "Lost time", "Mobility flow"],
     ),
-    ("Baseline", "Noise"): (
-        "Baseline noise",
+    "Noise": (
+        "edge_noise_results",
         [
             "Name",
             "Edge",
@@ -127,50 +145,8 @@ FROM_SITU_VAR_TO_DATA_COLS = {
             "Mobility flow",
         ],
     ),
-    ("Optimized", "Mobility flow"): (
-        "Optimized emissions",
-        [
-            "Name",
-            "Edge",
-            "Simulation timestep",
-            "Longitude",
-            "Latitude",
-            "Mobility flow",
-            "Mobility mode",
-            "Vehicle",
-        ],
-    ),
-    ("Optimized", "Speed"): (
-        "Optimized emissions",
-        [
-            "Name",
-            "Edge",
-            "Simulation timestep",
-            "Longitude",
-            "Latitude",
-            "Mobility flow",
-            "Mobility mode",
-            "Speed",
-        ],
-    ),
-    ("Optimized", "Travel time"): (
-        "Optimized trips",
-        ["Mobility mode", "Travel time", "Mobility flow"],
-    ),
-    ("Optimized", "Noise"): (
-        "Optimized noise",
-        [
-            "Name",
-            "Edge",
-            "Simulation timestep",
-            "Longitude",
-            "Latitude",
-            "Noise",
-            "Mobility flow",
-        ],
-    ),
-    ("Baseline", "Carbon monoxide"): (
-        "Baseline emissions",
+    "Carbon monoxide": (
+        "emission_results",
         [
             "Name",
             "Edge",
@@ -182,8 +158,8 @@ FROM_SITU_VAR_TO_DATA_COLS = {
             "Mobility flow",
         ],
     ),
-    ("Baseline", "Carbon dioxide"): (
-        "Baseline emissions",
+    "Carbon dioxide": (
+        "emission_results",
         [
             "Name",
             "Edge",
@@ -195,8 +171,8 @@ FROM_SITU_VAR_TO_DATA_COLS = {
             "Mobility flow",
         ],
     ),
-    ("Baseline", "Hydrocarbon"): (
-        "Baseline emissions",
+    "Hydrocarbon": (
+        "emission_results",
         [
             "Name",
             "Edge",
@@ -208,8 +184,8 @@ FROM_SITU_VAR_TO_DATA_COLS = {
             "Mobility flow",
         ],
     ),
-    ("Baseline", "Nitrogen oxides"): (
-        "Baseline emissions",
+    "Nitrogen oxides": (
+        "emission_results",
         [
             "Name",
             "Edge",
@@ -221,8 +197,8 @@ FROM_SITU_VAR_TO_DATA_COLS = {
             "Mobility flow",
         ],
     ),
-    ("Baseline", "Respirable particles"): (
-        "Baseline emissions",
+    "Respirable particles": (
+        "emission_results",
         [
             "Name",
             "Edge",
@@ -234,8 +210,8 @@ FROM_SITU_VAR_TO_DATA_COLS = {
             "Mobility flow",
         ],
     ),
-    ("Baseline", "Fine particles"): (
-        "Baseline emissions",
+    "Fine particles": (
+        "emission_results",
         [
             "Name",
             "Edge",
@@ -247,95 +223,10 @@ FROM_SITU_VAR_TO_DATA_COLS = {
             "Mobility flow",
         ],
     ),
-    ("Optimized", "Carbon monoxide"): (
-        "Optimized emissions",
-        [
-            "Name",
-            "Edge",
-            "Simulation timestep",
-            "Longitude",
-            "Latitude",
-            "Carbon monoxide",
-            "Mobility mode",
-            "Mobility flow",
-        ],
-    ),
-    ("Optimized", "Carbon dioxide"): (
-        "Optimized emissions",
-        [
-            "Name",
-            "Edge",
-            "Simulation timestep",
-            "Longitude",
-            "Latitude",
-            "Carbon dioxide",
-            "Mobility mode",
-            "Mobility flow",
-        ],
-    ),
-    ("Optimized", "Hydrocarbon"): (
-        "Optimized emissions",
-        [
-            "Name",
-            "Edge",
-            "Simulation timestep",
-            "Longitude",
-            "Latitude",
-            "Hydrocarbon",
-            "Mobility mode",
-            "Mobility flow",
-        ],
-    ),
-    ("Optimized", "Nitrogen oxides"): (
-        "Optimized emissions",
-        [
-            "Name",
-            "Edge",
-            "Simulation timestep",
-            "Longitude",
-            "Latitude",
-            "Nitrogen oxides",
-            "Mobility mode",
-            "Mobility flow",
-        ],
-    ),
-    ("Optimized", "Respirable particles"): (
-        "Optimized emissions",
-        [
-            "Name",
-            "Edge",
-            "Simulation timestep",
-            "Longitude",
-            "Latitude",
-            "Respirable particles",
-            "Mobility mode",
-            "Mobility flow",
-        ],
-    ),
-    ("Optimized", "Fine particles"): (
-        "Optimized emissions",
-        [
-            "Name",
-            "Edge",
-            "Simulation timestep",
-            "Longitude",
-            "Latitude",
-            "Fine particles",
-            "Mobility mode",
-            "Mobility flow",
-        ],
-    ),
-    ("Baseline", "Relocation rate"): (
+    "Relocation rate": (
         "Baseline livability",
         ["Name", "Longitude", "Latitude", "Relocation rate"],
     ),
-    ("Optimized", "Relocation rate"): (
-        "Optimized livability",
-        ["Name", "Longitude", "Latitude", "Relocation rate"],
-    ),
 }
-# Marks for optimization sliders
-OPTIM_MARKS = {0: "Equal", 1: "First", 2: "Second"}
-
 # Labels to variables, if updates are needed
 LABELS = {"Vehicle": "Mobility flow"}

@@ -24,6 +24,9 @@ app.layout = app_layout
 # Register callbacks
 register_callbacks(app)
 
+# Set the page title
+app.title = "AioSUT"
+
 # Run the app
 if __name__ == "__main__":
     app.run(debug=True)
