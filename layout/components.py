@@ -791,11 +791,12 @@ def _plots_section():
                     # Summary actions
                     html.Div(
                         dcc.Markdown(
-                            "",
+                            """WIP""",
                             id="summary-text",
                         ),
-                        id=f"summary-text-div",
-                        style={"display": "none"},
+                        id="summary-text-div",
+                        # style={"display": "none"},
+                        style=basic_style,
                     ),
                     # Heatmap div
                     html.Div(
@@ -833,7 +834,7 @@ def _plots_section():
                             type="cube",
                         ),
                         id="figure-two-div",
-                        style=basic_style,
+                        style={"display": "none"},
                     ),
                     # Third graph
                     html.Div(

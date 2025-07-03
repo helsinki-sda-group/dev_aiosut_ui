@@ -136,6 +136,7 @@ def register_callbacks(app):
         Output("figure-three", "figure"),
         Output("figure-four", "figure"),
         Output("location-text", "children"),
+        Output("plots-div", "style"),
         [
             Input("results-tabs", "value"),
             Input("crossfilter-season", "value"),
@@ -170,15 +171,19 @@ def register_callbacks(app):
         second_plot = {}
         third_plot = {}
         fourth_plot = {}
-        current_location = ""
+        current_location = """"""
+        plot_div_style = empty_style
         # Summary
-        if tab == "Summary":
-            summary_text = "Summary WIP!"
+        print(tab)
+        if tab == lc.OBJECTIVES[0]:
+            summary_text = """Summary WIP!"""
             summary_text_style = basic_style
+            plot_div_style = basic_style
         # Livability
-        elif tab == "Livability":
-            summary_text = "Livability WIP!"
+        elif tab == lc.OBJECTIVES[3]:
+            summary_text = """Livability WIP!"""
             summary_text_style = basic_style
+            plot_div_style = basic_style
         elif variable in ["Mobility flow"]:
             # Calculate data
             network = uh.get_data(
@@ -338,6 +343,7 @@ def register_callbacks(app):
             third_plot,
             fourth_plot,
             current_location,
+            plot_div_style,
         )
 
     @app.callback(
