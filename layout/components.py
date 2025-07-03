@@ -50,6 +50,7 @@ def _optimization_row(objective, icon_class):
                             },
                             value=0,
                             id=f"{objective.lower()}-priority",
+                            disabled=True,
                         ),
                     ]
                 ),
