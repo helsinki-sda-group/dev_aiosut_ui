@@ -19,7 +19,7 @@ app = Dash(
 server = app.server
 
 # Set the app layout
-app.layout = app_layout
+app.layout = app_layout()
 
 # Register callbacks
 register_callbacks(app)

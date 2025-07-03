@@ -23,10 +23,10 @@ OPTIMIZATION_SLIDER_VALUES = {
     2: "traffic2",
 }
 TIMESTEPS = [
-    {"label": "Every minute", "value": 1},
-    {"label": "Every quarter", "value": 15},
-    {"label": "Every half an hour", "value": 30},
-    {"label": "Every hour", "value": 60},
+    {"label": "Minutes", "value": 1},
+    {"label": "Quarters", "value": 15},
+    {"label": "Half an hours", "value": 30},
+    {"label": "Hours", "value": 60},
 ]
 SITUATIONS = [
     {"label": "Baseline", "value": "baseline"},
