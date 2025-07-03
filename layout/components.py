@@ -369,6 +369,7 @@ simulation_button = html.Div(
                 size="lg",
                 id="simulate-button",
                 n_clicks=0,
+                disabled=True,
             ),
             style={
                 "paddingTop": "3vh",
