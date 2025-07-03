@@ -167,7 +167,8 @@ simulation_time_col = dbc.Col(
             ),
             dcc.Dropdown(
                 options=WEEKDAYS,
-                placeholder="Select...",
+                value=WEEKDAYS[0]["value"],
+                # placeholder="Select...",
                 id="crossfilter-time",
                 optionHeight=50,
                 style={"font-size": "1.1em"},
@@ -202,7 +203,8 @@ simulation_demand_col = dbc.Col(
             ),
             dcc.Dropdown(
                 options=MOBILITY_DEMAND,
-                placeholder="Select...",
+                value=MOBILITY_DEMAND[1]["value"],
+                # placeholder="Select...",
                 id="crossfilter-demand",
                 optionHeight=50,
                 style={"font-size": "1.1em"},
@@ -237,7 +239,8 @@ simulation_area_col = dbc.Col(
             ),
             dcc.Dropdown(
                 options=AREAS,
-                placeholder="Select...",
+                # placeholder="Select...",
+                value=AREAS[2]["value"],
                 id="crossfilter-area",
                 optionHeight=50,
                 style={"font-size": "1.1em"},
@@ -272,7 +275,8 @@ simulation_season_col = dbc.Col(
             ),
             dcc.Dropdown(
                 options=SEASONS,
-                placeholder="Select...",
+                # placeholder="Select...",
+                value=SEASONS[2]["value"],
                 id="crossfilter-season",
                 optionHeight=50,
                 style={"font-size": "1.1em"},
@@ -791,12 +795,10 @@ def _plots_section():
                     # Summary actions
                     html.Div(
                         dcc.Markdown(
-                            """WIP""",
                             id="summary-text",
                         ),
                         id="summary-text-div",
-                        # style={"display": "none"},
-                        style=basic_style,
+                        style={"display": "none"},
                     ),
                     # Heatmap div
                     html.Div(
@@ -847,19 +849,6 @@ def _plots_section():
                             type="cube",
                         ),
                         id="figure-three-div",
-                        style={"display": "none"},
-                    ),
-                    # Fourth graph
-                    html.Div(
-                        dcc.Loading(
-                            dcc.Graph(
-                                id="figure-four",
-                                responsive=True,
-                                style={"height": "30vw"},
-                            ),
-                            type="cube",
-                        ),
-                        id="figure-four-div",
                         style={"display": "none"},
                     ),
                 ]

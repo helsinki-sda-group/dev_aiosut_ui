@@ -127,7 +127,7 @@ def get_data(
             f"{dataset_name}.csv.gz",
         )
     dataset = read_data(output_path)[dataset_cols]
-    print(dataset.head())
+    # print(dataset.head())
     if "noise" in dataset_name:
         helper_dataset_name, _ = uc.FROM_SITU_VAR_TO_DATA_COLS[
             (situation, "Carbon dioxide")
@@ -755,7 +755,7 @@ def aggregate_outputs(
                 #     )
                 if "edge_noise" in filename:
                     edge_noise = _parse_edge_noise_xml(f_out, net_df)
-                    print(edge_noise.head())
+                    # print(edge_noise.head())
                     edge_noise.to_csv(
                         f"{file_without_extension}.csv.gz",
                         compression="gzip",

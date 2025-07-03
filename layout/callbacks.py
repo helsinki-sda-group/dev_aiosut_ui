@@ -132,9 +132,11 @@ def register_callbacks(app):
         Output("summary-text", "children"),
         Output("summary-text-div", "style"),
         Output("figure-one", "figure"),
+        Output("figure-one", "style"),
         Output("figure-two", "figure"),
+        Output("figure-two", "style"),
         Output("figure-three", "figure"),
-        Output("figure-four", "figure"),
+        Output("figure-three", "style"),
         Output("location-text", "children"),
         Output("plots-div", "style"),
         [
@@ -164,184 +166,228 @@ def register_callbacks(app):
         timestep_range,
         spatial_click_data,
     ):
-        # Initialize output
-        summary_text = ""
+        params = [
+            season,
+            time,
+            area,
+            demand,
+            traffic_priority,
+            situation,
+            variable,
+            timeline_type,
+            timestep_range,
+        ]
+        params_ready = all(param is not None for param in params)
+        # Initialize outputs
+        summary_text = """"""
         summary_text_style = empty_style
         first_plot = {}
+        first_plot_style = empty_style
         second_plot = {}
+        second_plot_style = empty_style
         third_plot = {}
-        fourth_plot = {}
+        third_plot_style = empty_style
         current_location = """"""
         plot_div_style = empty_style
         # Summary
-        print(tab)
         if tab == lc.OBJECTIVES[0]:
             summary_text = """Summary WIP!"""
             summary_text_style = basic_style
             plot_div_style = basic_style
         # Livability
-        elif tab == lc.OBJECTIVES[3]:
+        elif tab == lc.OBJECTIVES[3] and situation is not None:
             summary_text = """Livability WIP!"""
             summary_text_style = basic_style
             plot_div_style = basic_style
-        elif variable in ["Mobility flow"]:
-            # Calculate data
-            network = uh.get_data(
-                area=area,
-                season=season,
-                time=time,
-                demand=demand,
-                optimization=traffic_priority,
-                situation=situation,
-                variable=variable,
-            )
-            network = uh.new_timeline(network=network, timestep_range=timestep_range)
-            network, current_location = uh.spatial_scope(spatial_click_data, network)
-            heatmap_network = (
-                network.groupby(["Timestep", "Edge"], observed=False)
-                .agg(
-                    {
-                        variable: timeline_type,
-                        "Longitude": "first",
-                        "Latitude": "first",
-                        "Name": "first",
-                    }
+        # Params required
+        if params_ready:
+            # Mobility flow or AQ
+            if tab == lc.OBJECTIVES[1] and variable in ["Mobility flow"]:
+                # Calculate data
+                network = uh.get_data(
+                    area=area,
+                    season=season,
+                    time=time,
+                    demand=demand,
+                    optimization=traffic_priority,
+                    situation=situation,
+                    variable=variable,
                 )
-                .reset_index()
-            )
-            # Draw the heatmap
-            heatmap = uh.create_heatmap(network=network, variable=variable)
-            first_plot = heatmap
-
-            # Calculate data
-            if timeline_type == "Average":
-                area_network = (
-                    network.groupby(
-                        ["Mobility mode", "Simulation timestep", "Timestep"],
-                        observed=False,
+                network = uh.new_timeline(
+                    network=network, timestep_range=timestep_range
+                )
+                network, current_location = uh.spatial_scope(
+                    spatial_click_data, network
+                )
+                heatmap_network = (
+                    network.groupby(["Timestep", "Edge"], observed=False)
+                    .agg(
+                        {
+                            variable: timeline_type,
+                            "Longitude": "first",
+                            "Latitude": "first",
+                            "Name": "first",
+                        }
                     )
-                    .agg({"Vehicle": pd.Series.nunique})
                     .reset_index()
                 )
+                # Draw the heatmap
+                heatmap = uh.create_heatmap(network=network, variable=variable)
+                first_plot = heatmap
+                first_plot_style = basic_style
+
+                # Calculate data
+                if timeline_type == "Average":
+                    area_network = (
+                        network.groupby(
+                            ["Mobility mode", "Simulation timestep", "Timestep"],
+                            observed=False,
+                        )
+                        .agg({"Vehicle": pd.Series.nunique})
+                        .reset_index()
+                    )
+                    area_network = (
+                        area_network.groupby(
+                            ["Mobility mode", "Timestep"], observed=False
+                        )
+                        .agg({"Vehicle": "mean"})
+                        .reset_index()
+                    )
+                elif timeline_type == "Sum":
+                    area_network = (
+                        network.groupby(["Mobility mode", "Timestep"], observed=False)
+                        .agg({"Vehicle": pd.Series.nunique})
+                        .reset_index()
+                    )
+
+                # Draw the area chart
+                area_plot = uh.create_area_chart(network=network, variable=variable)
+                third_plot = area_plot
+                third_plot_style = basic_style
+
+                plot_div_style = basic_style
+
+            # Histogram + bar plot
+            elif tab == lc.OBJECTIVES[1] and variable in ["Travel time", "Lost time"]:
+                network = uh.get_data(
+                    area=area,
+                    season=season,
+                    time=time,
+                    demand=demand,
+                    optimization=traffic_priority,
+                    situation=situation,
+                    variable=variable,
+                )
+                # Draw the histogram
+                histogram = uh.create_mobility_mode_histogram(
+                    network=network, variable=variable
+                )
+                second_plot = histogram
+                second_plot_style = basic_style
+
+                # Calculate data
+                barplot_network = (
+                    network.groupby(["Mobility mode"])
+                    .agg({variable: "mean", "Mobility flow": "sum"})
+                    .reset_index()
+                )
+                # Draw the bar plot
+                bar_plot = uh.create_mobility_mode_avg_bar_plot(
+                    network=network, variable=variable
+                )
+                # Output the plot
+                third_plot = bar_plot
+                third_plot_style = basic_style
+
+                plot_div_style = basic_style
+
+            # Noise, Speed or one of AQ variables
+            # Heatmap + bar plot + area chart
+            elif (tab == lc.OBJECTIVES[1] and variable in ["Noise", "Speed"]) or (
+                tab == lc.OBJECTIVES[2]
+            ):
+                # Calculate the data
+                network = uh.get_data(
+                    area=area,
+                    season=season,
+                    time=time,
+                    demand=demand,
+                    optimization=traffic_priority,
+                    situation=situation,
+                    variable=variable,
+                )
+                network = uh.new_timeline(
+                    network=network, timestep_range=timestep_range
+                )
+                network, current_location = uh.spatial_scope(
+                    spatial_click_data, network
+                )
+                heatmap_network = (
+                    network.groupby(["Timestep", "Edge"], observed=False)
+                    .agg(
+                        {
+                            variable: timeline_type,
+                            "Longitude": "first",
+                            "Latitude": "first",
+                            "Name": "first",
+                            "Mobility flow": timeline_type,
+                        }
+                    )
+                    .reset_index()
+                )
+                # Draw the heatmap
+                heatmap = uh.create_heatmap(network=heatmap_network, variable=variable)
+                first_plot = heatmap
+                first_plot_style = basic_style
+
+                # Calculate the data
+                barplot_network = (
+                    network.groupby(["Mobility mode"], observed=False)
+                    .agg({variable: "sum", "Mobility flow": "sum"})
+                    .reset_index()
+                )
+                barplot_network["Vehicle average"] = np.round(
+                    barplot_network[variable] / barplot_network["Mobility flow"], 4
+                )
+                # Draw the bar plot
+                bar_plot = uh.create_mobility_mode_avg_bar_plot(
+                    network=barplot_network, variable=variable
+                )
+                # Output the plot
+                second_plot = bar_plot
+                second_plot_style = basic_style
+
+                # Calculate the data
                 area_network = (
-                    area_network.groupby(["Mobility mode", "Timestep"], observed=False)
-                    .agg({"Vehicle": "mean"})
+                    network.groupby(["Timestep"], observed=False)
+                    .agg(
+                        {
+                            variable: timeline_type,
+                            "Mobility flow": timeline_type,
+                            "Mobility mode": "first",
+                        }
+                    )
                     .reset_index()
                 )
-            elif timeline_type == "Sum":
-                area_network = (
-                    network.groupby(["Mobility mode", "Timestep"], observed=False)
-                    .agg({"Vehicle": pd.Series.nunique})
-                    .reset_index()
+                # Draw the area chart
+                area_plot = uh.create_area_chart(
+                    network=area_network, variable=variable
                 )
+                third_plot = area_plot
+                third_plot_style = basic_style
 
-            # Draw the area chart
-            area_plot = uh.create_area_chart(network=network, variable=variable)
-            third_plot = area_plot
-
-        # Histogram + bar plot
-        elif variable in ["Travel time", "Lost time"]:
-            network = uh.get_data(
-                area=area,
-                season=season,
-                time=time,
-                demand=demand,
-                optimization=traffic_priority,
-                situation=situation,
-                variable=variable,
-            )
-            # network = uh.new_timeline(network=network, timestep_range=timestep_range)
-            # network, current_location = uh.spatial_scope(spatial_click_data, network)
-            # Draw the histogram
-            histogram = uh.create_mobility_mode_histogram(
-                network=network, variable=variable
-            )
-            second_plot = histogram
-
-            # Calculate data
-            barplot_network = (
-                network.groupby(["Mobility mode"])
-                .agg({variable: "mean", "Mobility flow": "sum"})
-                .reset_index()
-            )
-            # Draw the bar plot
-            bar_plot = uh.create_mobility_mode_avg_bar_plot(
-                network=network, variable=variable
-            )
-            # Output the plot
-            third_plot = bar_plot
-
-        # Heatmap + bar plot
-        elif variable in ["Noise", "Speed"]:
-            # Calculate the data
-            network = uh.get_data(
-                area=area,
-                season=season,
-                time=time,
-                demand=demand,
-                optimization=traffic_priority,
-                situation=situation,
-                variable=variable,
-            )
-            network = uh.new_timeline(network=network, timestep_range=timestep_range)
-            network, current_location = uh.spatial_scope(spatial_click_data, network)
-            heatmap_network = (
-                network.groupby(["Timestep", "Edge"], observed=False)
-                .agg(
-                    {
-                        variable: timeline_type,
-                        "Longitude": "first",
-                        "Latitude": "first",
-                        "Name": "first",
-                        "Mobility flow": timeline_type,
-                    }
-                )
-                .reset_index()
-            )
-            # Draw the heatmap
-            heatmap = uh.create_heatmap(network=heatmap_network, variable=variable)
-            first_plot = heatmap
-
-            # Calculate the data
-            barplot_network = (
-                network.groupby(["Mobility mode"], observed=False)
-                .agg({variable: "sum", "Mobility flow": "sum"})
-                .reset_index()
-            )
-            barplot_network["Vehicle average"] = np.round(
-                barplot_network[variable] / barplot_network["Mobility flow"], 4
-            )
-            # Draw the bar plot
-            bar_plot = uh.create_mobility_mode_avg_bar_plot(
-                network=barplot_network, variable=variable
-            )
-            # Output the plot
-            second_plot = bar_plot
-
-            # Calculate the data
-            area_network = (
-                network.groupby(["Timestep"], observed=False)
-                .agg(
-                    {
-                        variable: timeline_type,
-                        "Mobility flow": timeline_type,
-                        "Mobility mode": "first",
-                    }
-                )
-                .reset_index()
-            )
-            # Draw the area chart
-            area_plot = uh.create_area_chart(network=area_network, variable=variable)
-            third_plot = area_plot
+                plot_div_style = basic_style
 
         # Return the figures, styles and location
         return (
             summary_text,
             summary_text_style,
             first_plot,
+            first_plot_style,
             second_plot,
+            second_plot_style,
             third_plot,
-            fourth_plot,
+            third_plot_style,
             current_location,
             plot_div_style,
         )
