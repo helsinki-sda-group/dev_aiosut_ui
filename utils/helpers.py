@@ -47,10 +47,10 @@ def map_bounds(network):
     south_bound = network["Latitude"].min()
     north_bound = network["Latitude"].max()
     map_bounds = {
-        "west": west_bound * (1 - 2e-4),
-        "east": east_bound * (1 + 2e-4),
-        "south": south_bound * (1 - 5e-6),
-        "north": north_bound * (1 + 5e-6),
+        "west": west_bound * (1 - 2e-3),
+        "east": east_bound * (1 + 2e-3),
+        "south": south_bound * (1 - 5e-5),
+        "north": north_bound * (1 + 5e-5),
     }
     return map_bounds
 
@@ -113,7 +113,7 @@ def get_data(
             "scenarios",
             f"{area.lower()}",
             f"{demand.lower()}_{season.lower()}_{time.lower()}",
-            f"{situation.lower()}_{uc.OPTIMIZATION[optimization]}",
+            f"{situation.lower()}_{uc.OPTIMIZATION_SLIDER_VALUES[optimization]}",
             f"{dataset_name}.csv.gz",
         )
     else:
@@ -175,7 +175,7 @@ def create_heatmap(network, variable):
         lat="Latitude",
         lon="Longitude",
         z=variable,
-        radius=15,
+        radius=13,
         map_style="open-street-map",
         range_color=(0, legend_max),
         hover_data={

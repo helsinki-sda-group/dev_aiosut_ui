@@ -14,6 +14,7 @@ from utils.constants import (
 )
 
 basic_style = {"paddingTop": "2vh", "paddingBottom": "2vh"}
+empty_style = {"display": "none"}
 external_stylesheets = [dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP]
 
 
@@ -67,11 +68,11 @@ def _optimization_row(objective, icon_class):
     )
 
 
-plots_location_text = html.P(
+plots_location_text = html.Div(
     "Location: Network",
     id="location-text",
     style={
-        "fontSize": "1em",
+        "fontSize": "1.2em",
         "paddingBottom": "4vh",
         "display": "block",
         "paddingTop": "2vh",
@@ -84,7 +85,7 @@ plots_reset_button = dbc.Button(
     n_clicks=0,
     style={
         "display": "block",
-        "font-size": "0.75em",
+        "font-size": "1em",
         "automargin": True,
         "padding": "1vh",
     },
@@ -145,26 +146,22 @@ project_info_collapse = dbc.Collapse(
 simulation_time_col = dbc.Col(
     html.Div(
         [
-            html.Div(
-                [
-                    html.I(
-                        className="bi bi-calendar-day",
-                        style={
-                            "paddingRight": "20px",
-                            "fontSize": "1.75em",
-                            "decorative": True,
-                        },
-                    ),
-                    html.Label(
-                        "Time of week",
-                        htmlFor="crossfilter-time",
-                        style={
-                            "fontSize": "1.4em",
-                            "paddingBottom": "2vh",
-                            "paddingTop": "1vh",
-                        },
-                    ),
-                ],
+            html.I(
+                className="bi bi-calendar-day",
+                style={
+                    "paddingRight": "20px",
+                    "fontSize": "1.75em",
+                    "decorative": True,
+                },
+            ),
+            html.Label(
+                "Time of week",
+                htmlFor="crossfilter-time",
+                style={
+                    "fontSize": "1.4em",
+                    "paddingBottom": "2vh",
+                    "paddingTop": "1vh",
+                },
             ),
             dcc.Dropdown(
                 options=WEEKDAYS,
@@ -181,26 +178,22 @@ simulation_time_col = dbc.Col(
 simulation_demand_col = dbc.Col(
     html.Div(
         [
-            html.Div(
-                [
-                    html.I(
-                        className="bi bi-graph-up",
-                        style={
-                            "paddingRight": "20px",
-                            "fontSize": "1.75em",
-                            "decorative": True,
-                        },
-                    ),
-                    html.Label(
-                        "Demand",
-                        htmlFor="crossfilter-demand",
-                        style={
-                            "fontSize": "1.4em",
-                            "paddingBottom": "2vh",
-                            "paddingTop": "1vh",
-                        },
-                    ),
-                ],
+            html.I(
+                className="bi bi-graph-up",
+                style={
+                    "paddingRight": "20px",
+                    "fontSize": "1.75em",
+                    "decorative": True,
+                },
+            ),
+            html.Label(
+                "Demand",
+                htmlFor="crossfilter-demand",
+                style={
+                    "fontSize": "1.4em",
+                    "paddingBottom": "2vh",
+                    "paddingTop": "1vh",
+                },
             ),
             dcc.Dropdown(
                 options=MOBILITY_DEMAND,
@@ -217,26 +210,22 @@ simulation_demand_col = dbc.Col(
 simulation_area_col = dbc.Col(
     html.Div(
         [
-            html.Div(
-                [
-                    html.I(
-                        className="bi bi-map",
-                        style={
-                            "paddingRight": "20px",
-                            "fontSize": "1.75em",
-                            "decorative": True,
-                        },
-                    ),
-                    html.Label(
-                        "Area",
-                        htmlFor="crossfilter-area",
-                        style={
-                            "fontSize": "1.4em",
-                            "paddingBottom": "2vh",
-                            "paddingTop": "1vh",
-                        },
-                    ),
-                ],
+            html.I(
+                className="bi bi-map",
+                style={
+                    "paddingRight": "20px",
+                    "fontSize": "1.75em",
+                    "decorative": True,
+                },
+            ),
+            html.Label(
+                "Area",
+                htmlFor="crossfilter-area",
+                style={
+                    "fontSize": "1.4em",
+                    "paddingBottom": "2vh",
+                    "paddingTop": "1vh",
+                },
             ),
             dcc.Dropdown(
                 options=AREAS,
@@ -253,26 +242,22 @@ simulation_area_col = dbc.Col(
 simulation_season_col = dbc.Col(
     html.Div(
         [
-            html.Div(
-                [
-                    html.I(
-                        className="bi bi-cloud-sun",
-                        style={
-                            "paddingRight": "20px",
-                            "fontSize": "1.75em",
-                            "decorative": True,
-                        },
-                    ),
-                    html.Label(
-                        "Season",
-                        htmlFor="crossfilter-season",
-                        style={
-                            "fontSize": "1.4em",
-                            "paddingBottom": "2vh",
-                            "paddingTop": "1vh",
-                        },
-                    ),
-                ],
+            html.I(
+                className="bi bi-cloud-sun",
+                style={
+                    "paddingRight": "20px",
+                    "fontSize": "1.75em",
+                    "decorative": True,
+                },
+            ),
+            html.Label(
+                "Season",
+                htmlFor="crossfilter-season",
+                style={
+                    "fontSize": "1.4em",
+                    "paddingBottom": "2vh",
+                    "paddingTop": "1vh",
+                },
             ),
             dcc.Dropdown(
                 options=SEASONS,
@@ -612,8 +597,8 @@ viz_temporal_resolution_col = dbc.Col(
                 style={"font-size": "1.1em"},
             ),
         ],
+        style=empty_style,
         id="timeline-div",
-        style={"display": "none"},
     ),
 )
 
@@ -646,8 +631,8 @@ viz_timestep_interval_col = dbc.Col(
                 style={"font-size": "1.1em"},
             ),
         ],
+        style=empty_style,
         id="timestep-div",
-        style={"display": "none"},
     ),
 )
 
@@ -680,8 +665,8 @@ viz_variable_col = dbc.Col(
                 style={"font-size": "1.1em"},
             ),
         ],
+        style=empty_style,
         id="variable-div",
-        style={"display": "none"},
     ),
 )
 
@@ -714,13 +699,12 @@ viz_situation_col = dbc.Col(
                 style={"fontSize": "1.1em"},
             ),
         ],
+        style=empty_style,
         id="situation-div",
-        style={"display": "none"},
     ),
 )
 
-
-viz_parameter_row = dbc.Row(
+viz_full_parameter_row = dbc.Row(
     [
         viz_situation_col,
         viz_variable_col,
@@ -738,6 +722,17 @@ viz_header_row = dbc.Row(
     align="top",
     style={"paddingBottom": "1vh"},
 )
+
+
+def _project_section():
+    return html.Div(
+        [
+            project_header_row,
+            project_info_collapse,
+            html.Hr(),
+        ],
+        style=basic_style,
+    )
 
 
 def _simulation_parameters_section():
@@ -782,10 +777,25 @@ def _viz_parameters_section():
         [
             viz_header_row,
             viz_info_collapse,
-            viz_parameter_row,
+            html.Div(
+                viz_full_parameter_row,
+                id="viz-parameter-row",
+                style=basic_style,
+            ),
+            html.Center(
+                dbc.Button(
+                    "Visualize",
+                    id="visualize-button",
+                    className="mb-3 d-md-block",
+                    color="primary",
+                    n_clicks=0,
+                    style={"fontSize": "1.2em"},
+                ),
+                style={"paddingTop": "4vh", "paddingBottom": "3vh"},
+            ),
         ],
         id="viz-div",
-        style={"display": "none"},
+        style=basic_style,
     )
 
 
@@ -796,78 +806,28 @@ def _plots_section():
                 [
                     # Summary actions
                     html.Div(
-                        dcc.Markdown(
-                            id="summary-text",
-                        ),
-                        id="summary-text-div",
-                        style={"display": "none"},
+                        [],
+                        id="summary-text",
                     ),
-                    # Heatmap div
+                    # Figure one
                     html.Div(
-                        [
-                            # Figure
-                            dcc.Loading(
-                                dcc.Graph(
-                                    id="figure-one",
-                                    responsive=True,
-                                    config={"showTips": True},
-                                    style={
-                                        "height": "45vw",
-                                        "width": "68vw",
-                                        "display": "block",
-                                    },
-                                ),
-                                type="cube",
-                            ),
-                            # Location text
-                            plots_location_text,
-                            # Reset button
-                            plots_reset_button,
-                        ],
+                        [],
                         id="figure-one-div",
-                        style={"display": "none"},
                     ),
                     # Second graph
                     html.Div(
-                        dcc.Loading(
-                            dcc.Graph(
-                                id="figure-two",
-                                responsive=True,
-                                style={"height": "30vw"},
-                            ),
-                            type="cube",
-                        ),
+                        [],
                         id="figure-two-div",
-                        style={"display": "none"},
                     ),
                     # Third graph
                     html.Div(
-                        dcc.Loading(
-                            dcc.Graph(
-                                id="figure-three",
-                                responsive=True,
-                                style={"height": "30vw"},
-                            ),
-                            type="cube",
-                        ),
+                        [],
                         id="figure-three-div",
-                        style={"display": "none"},
                     ),
                 ]
             ),
         ],
         id="plots-div",
-        style={"display": "none"},
-    )
-
-
-def _project_section():
-    return html.Div(
-        [
-            project_header_row,
-            project_info_collapse,
-            html.Hr(),
-        ],
         style=basic_style,
     )
 
@@ -879,7 +839,16 @@ def app_layout():
             _simulation_parameters_section(),
             _results_section(),
             _viz_parameters_section(),
-            _plots_section(),
+            dcc.Loading(
+                overlay_style={
+                    "visibility": "visible",
+                    "filter": "blur(2px)",
+                },
+                style={"paddingTop": "5vh", "paddingBottom": "2vh"},
+                type="circle",
+                delay_hide=1000,
+                children=_plots_section(),
+            ),
         ],
         id="app-div",
         style={

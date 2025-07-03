@@ -1,4 +1,4 @@
-from dash import Input, Output, State
+from dash import Input, Output, State, dcc, html
 import utils.helpers as uh
 import utils.constants as uc
 import layout.components as lc
@@ -30,15 +30,15 @@ def register_callbacks(app):
             return not is_open
         return is_open
 
-    @app.callback(
-        Output("optimization-info-collapse", "is_open"),
-        Input("optimization-info-button", "n_clicks"),
-        State("optimization-info-collapse", "is_open"),
-    )
-    def toggle_optimization_info_collapse(n, is_open):
-        if n:
-            return not is_open
-        return is_open
+    # @app.callback(
+    #     Output("optimization-info-collapse", "is_open"),
+    #     Input("optimization-info-button", "n_clicks"),
+    #     State("optimization-info-collapse", "is_open"),
+    # )
+    # def toggle_optimization_info_collapse(n, is_open):
+    #     if n:
+    #         return not is_open
+    #     return is_open
 
     @app.callback(
         Output("filter-info-collapse", "is_open"),
@@ -60,7 +60,7 @@ def register_callbacks(app):
             return not is_open
         return is_open
 
-    # # TODO
+    # # TODO: Check if simulation data is available, and if not, ask permission to proceed to simulate
     # @app.callback(
     #     [
     #         Input("simulate-button", "n_clicks"),
@@ -87,6 +87,7 @@ def register_callbacks(app):
             Output("crossfilter-variable", "options"),
             Output("timestep-div", "style"),
             Output("timeline-div", "style"),
+            Output("visualize-button", "style"),
         ],
         Input("results-tabs", "value"),
     )
@@ -99,6 +100,7 @@ def register_callbacks(app):
                 uc.TRAFFIC_VARIABLES,
                 basic_style,
                 basic_style,
+                {"fontSize": "1.2em"},
             ]
         elif tab == lc.OBJECTIVES[2]:
             return [
@@ -108,6 +110,7 @@ def register_callbacks(app):
                 uc.AQ_VARIABLES,
                 basic_style,
                 basic_style,
+                {"fontSize": "1.2em"},
             ]
         elif tab == lc.OBJECTIVES[3]:
             return [
@@ -117,6 +120,7 @@ def register_callbacks(app):
                 empty_style,
                 empty_style,
                 empty_style,
+                {"fontSize": "1.2em"},
             ]
         else:
             return [
@@ -126,31 +130,30 @@ def register_callbacks(app):
                 empty_style,
                 empty_style,
                 empty_style,
+                empty_style,
             ]
 
     @app.callback(
-        Output("summary-text", "children"),
-        Output("summary-text-div", "style"),
-        Output("figure-one", "figure"),
-        Output("figure-one", "style"),
-        Output("figure-two", "figure"),
-        Output("figure-two", "style"),
-        Output("figure-three", "figure"),
-        Output("figure-three", "style"),
-        Output("location-text", "children"),
-        Output("plots-div", "style"),
+        [
+            Output("figure-one-div", "children"),
+            Output("figure-two-div", "children"),
+            Output("figure-three-div", "children"),
+            Output("summary-text", "children"),
+            # Output("location-text", "children"),
+        ],
         [
             Input("results-tabs", "value"),
-            Input("crossfilter-season", "value"),
-            Input("crossfilter-time", "value"),
-            Input("crossfilter-area", "value"),
-            Input("crossfilter-demand", "value"),
-            Input("traffic-priority", "value"),
-            Input("crossfilter-situation", "value"),
-            Input("crossfilter-variable", "value"),
-            Input("crossfilter-timeline-type", "value"),
-            Input("crossfilter-timestep", "value"),
-            Input("figure-one", "clickData"),
+            State("crossfilter-season", "value"),
+            State("crossfilter-time", "value"),
+            State("crossfilter-area", "value"),
+            State("crossfilter-demand", "value"),
+            State("traffic-priority", "value"),
+            State("crossfilter-situation", "value"),
+            State("crossfilter-variable", "value"),
+            State("crossfilter-timeline-type", "value"),
+            State("crossfilter-timestep", "value"),
+            Input("visualize-button", "n_clicks"),
+            # Input("figure-one", "clickData"),
         ],
     )
     def show_graphs(
@@ -164,7 +167,8 @@ def register_callbacks(app):
         variable,
         timeline_type,
         timestep_range,
-        spatial_click_data,
+        n_clicks,
+        # spatial_click_data,
     ):
         params = [
             season,
@@ -179,28 +183,33 @@ def register_callbacks(app):
         ]
         params_ready = all(param is not None for param in params)
         # Initialize outputs
-        summary_text = """"""
-        summary_text_style = empty_style
         first_plot = {}
-        first_plot_style = empty_style
         second_plot = {}
-        second_plot_style = empty_style
         third_plot = {}
-        third_plot_style = empty_style
-        current_location = """"""
-        plot_div_style = empty_style
+        summary_text = {}
+        # current_location = """Location: Network"""
         # Summary
         if tab == lc.OBJECTIVES[0]:
-            summary_text = """Summary WIP!"""
-            summary_text_style = basic_style
-            plot_div_style = basic_style
+            summary_text = dcc.Markdown(
+                """Summary WIP!""",
+                style={
+                    "paddingTop": "2vh",
+                    "paddingBottom": "2vh",
+                    "fontSize": "1.2em",
+                },
+            )
         # Livability
         elif tab == lc.OBJECTIVES[3] and situation is not None:
-            summary_text = """Livability WIP!"""
-            summary_text_style = basic_style
-            plot_div_style = basic_style
+            summary_text = dcc.Markdown(
+                """Livability WIP!""",
+                style={
+                    "paddingTop": "2vh",
+                    "paddingBottom": "2vh",
+                    "fontSize": "1.2em",
+                },
+            )
         # Params required
-        if params_ready:
+        elif params_ready:
             # Mobility flow or AQ
             if tab == lc.OBJECTIVES[1] and variable in ["Mobility flow"]:
                 # Calculate data
@@ -216,9 +225,9 @@ def register_callbacks(app):
                 network = uh.new_timeline(
                     network=network, timestep_range=timestep_range
                 )
-                network, current_location = uh.spatial_scope(
-                    spatial_click_data, network
-                )
+                # network, current_location = uh.spatial_scope(
+                #     spatial_click_data, network
+                # )
                 heatmap_network = (
                     network.groupby(["Timestep", "Edge"], observed=False)
                     .agg(
@@ -233,11 +242,18 @@ def register_callbacks(app):
                 )
                 # Draw the heatmap
                 heatmap = uh.create_heatmap(network=network, variable=variable)
-                first_plot = heatmap
-                first_plot_style = basic_style
+                first_plot = dcc.Graph(
+                    figure=heatmap,
+                    responsive=True,
+                    style={
+                        "height": "50vw",
+                        "width": "55vw",
+                        "paddingBottom": "2vh",
+                    },
+                )
 
                 # Calculate data
-                if timeline_type == "Average":
+                if timeline_type == "mean":
                     area_network = (
                         network.groupby(
                             ["Mobility mode", "Simulation timestep", "Timestep"],
@@ -253,7 +269,7 @@ def register_callbacks(app):
                         .agg({"Vehicle": "mean"})
                         .reset_index()
                     )
-                elif timeline_type == "Sum":
+                elif timeline_type == "sum":
                     area_network = (
                         network.groupby(["Mobility mode", "Timestep"], observed=False)
                         .agg({"Vehicle": pd.Series.nunique})
@@ -262,10 +278,15 @@ def register_callbacks(app):
 
                 # Draw the area chart
                 area_plot = uh.create_area_chart(network=network, variable=variable)
-                third_plot = area_plot
-                third_plot_style = basic_style
-
-                plot_div_style = basic_style
+                third_plot = dcc.Graph(
+                    figure=area_plot,
+                    responsive=True,
+                    style={
+                        "height": "30vw",
+                        "paddingBottom": "2vh",
+                        "paddingTop": "2vh",
+                    },
+                )
 
             # Histogram + bar plot
             elif tab == lc.OBJECTIVES[1] and variable in ["Travel time", "Lost time"]:
@@ -282,8 +303,11 @@ def register_callbacks(app):
                 histogram = uh.create_mobility_mode_histogram(
                     network=network, variable=variable
                 )
-                second_plot = histogram
-                second_plot_style = basic_style
+                second_plot = dcc.Graph(
+                    figure=histogram,
+                    responsive=True,
+                    style={"height": "30vw"},
+                )
 
                 # Calculate data
                 barplot_network = (
@@ -296,16 +320,19 @@ def register_callbacks(app):
                     network=network, variable=variable
                 )
                 # Output the plot
-                third_plot = bar_plot
-                third_plot_style = basic_style
-
-                plot_div_style = basic_style
+                third_plot = dcc.Graph(
+                    figure=bar_plot,
+                    responsive=True,
+                    style={
+                        "height": "30vw",
+                        "paddingBottom": "2vh",
+                        "paddingTop": "2vh",
+                    },
+                )
 
             # Noise, Speed or one of AQ variables
             # Heatmap + bar plot + area chart
-            elif (tab == lc.OBJECTIVES[1] and variable in ["Noise", "Speed"]) or (
-                tab == lc.OBJECTIVES[2]
-            ):
+            elif tab == lc.OBJECTIVES[1] and variable in ["Noise", "Speed"]:
                 # Calculate the data
                 network = uh.get_data(
                     area=area,
@@ -319,14 +346,14 @@ def register_callbacks(app):
                 network = uh.new_timeline(
                     network=network, timestep_range=timestep_range
                 )
-                network, current_location = uh.spatial_scope(
-                    spatial_click_data, network
-                )
+                # network, current_location = uh.spatial_scope(
+                #     spatial_click_data, network
+                # )
                 heatmap_network = (
                     network.groupby(["Timestep", "Edge"], observed=False)
                     .agg(
                         {
-                            variable: timeline_type,
+                            variable: "mean",
                             "Longitude": "first",
                             "Latitude": "first",
                             "Name": "first",
@@ -337,8 +364,21 @@ def register_callbacks(app):
                 )
                 # Draw the heatmap
                 heatmap = uh.create_heatmap(network=heatmap_network, variable=variable)
-                first_plot = heatmap
-                first_plot_style = basic_style
+                first_plot = html.Div(
+                    [
+                        dcc.Graph(
+                            figure=heatmap,
+                            responsive=True,
+                            style={
+                                "height": "50vw",
+                                "width": "55vw",
+                                "paddingBottom": "2vh",
+                            },
+                        ),
+                        lc.plots_location_text,
+                        lc.plots_reset_button,
+                    ]
+                )
 
                 # Calculate the data
                 barplot_network = (
@@ -354,8 +394,11 @@ def register_callbacks(app):
                     network=barplot_network, variable=variable
                 )
                 # Output the plot
-                second_plot = bar_plot
-                second_plot_style = basic_style
+                second_plot = dcc.Graph(
+                    figure=bar_plot,
+                    responsive=True,
+                    style={"height": "30vw"},
+                )
 
                 # Calculate the data
                 area_network = (
@@ -373,30 +416,123 @@ def register_callbacks(app):
                 area_plot = uh.create_area_chart(
                     network=area_network, variable=variable
                 )
-                third_plot = area_plot
-                third_plot_style = basic_style
+                third_plot = dcc.Graph(
+                    figure=area_plot,
+                    responsive=True,
+                    style={
+                        "height": "30vw",
+                        "paddingBottom": "2vh",
+                        "paddingTop": "2vh",
+                    },
+                )
+            elif tab == lc.OBJECTIVES[2]:
+                # Calculate the data
+                network = uh.get_data(
+                    area=area,
+                    season=season,
+                    time=time,
+                    demand=demand,
+                    optimization=traffic_priority,
+                    situation=situation,
+                    variable=variable,
+                )
+                network = uh.new_timeline(
+                    network=network, timestep_range=timestep_range
+                )
+                # network, current_location = uh.spatial_scope(
+                #     spatial_click_data, network
+                # )
+                heatmap_network = (
+                    network.groupby(["Timestep", "Edge"], observed=False)
+                    .agg(
+                        {
+                            variable: timeline_type,
+                            "Longitude": "first",
+                            "Latitude": "first",
+                            "Name": "first",
+                            "Mobility flow": timeline_type,
+                        }
+                    )
+                    .reset_index()
+                )
+                # Draw the heatmap
+                heatmap = uh.create_heatmap(network=heatmap_network, variable=variable)
+                first_plot = html.Div(
+                    [
+                        dcc.Graph(
+                            figure=heatmap,
+                            responsive=True,
+                            style={
+                                "height": "50vw",
+                                "width": "55vw",
+                                "paddingBottom": "2vh",
+                            },
+                        ),
+                        lc.plots_location_text,
+                        lc.plots_reset_button,
+                    ]
+                )
 
-                plot_div_style = basic_style
+                # Calculate the data
+                barplot_network = (
+                    network.groupby(["Mobility mode"], observed=False)
+                    .agg({variable: "sum", "Mobility flow": "sum"})
+                    .reset_index()
+                )
+                barplot_network["Vehicle average"] = np.round(
+                    barplot_network[variable] / barplot_network["Mobility flow"], 4
+                )
+                # Draw the bar plot
+                bar_plot = uh.create_mobility_mode_avg_bar_plot(
+                    network=barplot_network, variable=variable
+                )
+                # Output the plot
+                second_plot = dcc.Graph(
+                    figure=bar_plot,
+                    responsive=True,
+                    style={"height": "30vw"},
+                )
+
+                # Calculate the data
+                area_network = (
+                    network.groupby(["Timestep"], observed=False)
+                    .agg(
+                        {
+                            variable: timeline_type,
+                            "Mobility flow": timeline_type,
+                            "Mobility mode": "first",
+                        }
+                    )
+                    .reset_index()
+                )
+                # Draw the area chart
+                area_plot = uh.create_area_chart(
+                    network=area_network, variable=variable
+                )
+                third_plot = dcc.Graph(
+                    figure=area_plot,
+                    responsive=True,
+                    style={
+                        "height": "30vw",
+                        "paddingBottom": "2vh",
+                        "paddingTop": "2vh",
+                    },
+                )
 
         # Return the figures, styles and location
-        return (
-            summary_text,
-            summary_text_style,
+        return [
             first_plot,
-            first_plot_style,
             second_plot,
-            second_plot_style,
             third_plot,
-            third_plot_style,
-            current_location,
-            plot_div_style,
-        )
+            # current_location,
+            summary_text,
+        ]
 
-    @app.callback(
-        Output("figure-one", "clickData"),
-        [
-            Input("reset-location", "n_clicks"),
-        ],
-    )
-    def reset_location(reset):
-        return None
+    # @app.callback(
+    #     Output("figure-one", "clickData"),
+    #     [
+    #         Input("reset-location", "n_clicks"),
+    #     ],
+    # )
+    # def reset_location(reset):
+    #     return None

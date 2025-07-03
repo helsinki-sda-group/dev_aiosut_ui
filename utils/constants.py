@@ -83,7 +83,7 @@ HOVERS = dict(bgcolor="white", font_size=16)
 
 # Global data variables
 UNITS = {
-    "Mobility flow": "# of passengers",
+    "Mobility flow": "# of vehicles",
     "Speed": "m/s",
     "Travel time": "# of trips",
     "Lost time": "# of trips",
