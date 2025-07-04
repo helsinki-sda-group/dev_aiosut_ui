@@ -84,6 +84,7 @@ HOVERS = dict(bgcolor="white", font_size=16)
 # Global data variables
 UNITS = {
     "Mobility flow": "# of vehicles",
+    "Vehicle": "# of vehicles",
     "Speed": "m/s",
     "Travel time": "# of trips",
     "Lost time": "# of trips",
@@ -123,6 +124,7 @@ FROM_VAR_TO_DATA_COLS = {
             "Mobility flow",
             "Mobility mode",
             "Speed",
+            "Vehicle",
         ],
     ),
     "Travel time": (
@@ -142,7 +144,20 @@ FROM_VAR_TO_DATA_COLS = {
             "Longitude",
             "Latitude",
             "Noise",
+        ],
+    ),
+    "Noise2": (
+        "emission_results",
+        [
+            "Name",
+            "Edge",
+            "Simulation timestep",
+            "Longitude",
+            "Latitude",
+            "Noise",
             "Mobility flow",
+            "Mobility mode",
+            "Vehicle",
         ],
     ),
     "Carbon monoxide": (

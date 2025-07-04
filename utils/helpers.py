@@ -27,11 +27,12 @@ def new_timeline(network, timestep_range):
         timestep_range * 60,
         dtype=int,
     )
-    timestep_labels = timesteps // 60
+    timestep_labels = timesteps // 60 + timestep_range
+    timesteps = np.append(timesteps, np.inf)
     network["Timestep"] = pd.cut(
         network["Simulation timestep"],
         bins=timesteps,
-        labels=timestep_labels[1:],
+        labels=timestep_labels,
         right=False,
         include_lowest=True,
     )
@@ -129,9 +130,7 @@ def get_data(
     dataset = read_data(output_path)[dataset_cols]
     # print(dataset.head())
     if "noise" in dataset_name:
-        helper_dataset_name, _ = uc.FROM_SITU_VAR_TO_DATA_COLS[
-            (situation, "Carbon dioxide")
-        ]
+        helper_dataset_name, _ = uc.FROM_VAR_TO_DATA_COLS["Carbon dioxide"]
         if situation == "optimized":
             helper_output_path = os.path.join(
                 # ".",
@@ -169,7 +168,7 @@ def get_data(
 
 def create_heatmap(network, variable):
     """Creates an animated heatmap for with a capability to drilldown on a specific point."""
-    legend_max = 1.2 * network[network[variable] != 0][variable].median()
+    legend_max = 1.75 * network[network[variable] != 0][variable].median()
     heatmap = px.density_map(
         data_frame=network,
         lat="Latitude",
@@ -202,7 +201,6 @@ def create_heatmap(network, variable):
         clickmode="event+select",
         sliders=sliders,
         map_bounds=map_bounds(network=network),
-        # labels=uc.LABELS,
     )
     # Sets the variable name and its unit as a legend to the color bar
     heatmap.layout["coloraxis"]["colorbar"][
@@ -217,8 +215,6 @@ def create_mobility_mode_avg_bar_plot(network, variable):
         data_frame=network,
         x=variable,
         y="Mobility mode",
-        color=variable,
-        hover_data="Mobility flow",
         title=f"Average {variable.lower()} per mobility mode",
     )
     # Customize the hovers, title, axis labels and legend
@@ -229,7 +225,6 @@ def create_mobility_mode_avg_bar_plot(network, variable):
         xaxis_title=f"Average {variable.lower()} ({uc.UNITS[variable]})",
         yaxis_title="Mobility mode",
         xaxis=dict(range=[0, network[variable].max() * 1.1]),
-        # labels=uc.LABELS,
     )
     return bar_plot
 
@@ -237,19 +232,18 @@ def create_mobility_mode_avg_bar_plot(network, variable):
 def create_area_chart(network, variable):
     """Creates an area chart, where the x-axis is over time."""
     # Draw the area chart
-    area_plot = px.area(
+    area_plot = px.line(
         data_frame=network,
         x="Timestep",
         y=variable,
         color="Mobility mode",
-        color_discrete_sequence=px.colors.sequential.Plasma_r,
+        # color_discrete_sequence=px.colors.sequential.Plasma_r,
         title="Mobility mode time series",
     )
     # Customize the title and yaxis
     area_plot.update_layout(
         title_x=0.11,
         yaxis_title=f"{variable} ({uc.UNITS[variable]})",
-        # labels=uc.LABELS,
     )
     # Output the plot
     return area_plot
@@ -265,7 +259,6 @@ def create_mobility_mode_histogram(network, variable):
         yaxis_title=uc.UNITS[variable],
         bargap=0.2,
         xaxis_title=f"{variable}",
-        # labels=uc.LABELS,
     )
     # Output the plot
     return histogram

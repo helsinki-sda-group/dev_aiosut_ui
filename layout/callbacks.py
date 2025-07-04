@@ -232,7 +232,7 @@ def register_callbacks(app):
                     network.groupby(["Timestep", "Edge"], observed=False)
                     .agg(
                         {
-                            variable: timeline_type,
+                            variable: "sum",
                             "Longitude": "first",
                             "Latitude": "first",
                             "Name": "first",
@@ -240,8 +240,13 @@ def register_callbacks(app):
                     )
                     .reset_index()
                 )
+                if timeline_type == "mean":
+                    heatmap_network[variable] = (
+                        heatmap_network[variable] / timestep_range
+                    )
+                heatmap_network.fillna(value={"Vehicle": 0})
                 # Draw the heatmap
-                heatmap = uh.create_heatmap(network=network, variable=variable)
+                heatmap = uh.create_heatmap(network=heatmap_network, variable=variable)
                 first_plot = dcc.Graph(
                     figure=heatmap,
                     responsive=True,
@@ -259,7 +264,7 @@ def register_callbacks(app):
                             ["Mobility mode", "Simulation timestep", "Timestep"],
                             observed=False,
                         )
-                        .agg({"Vehicle": pd.Series.nunique})
+                        .agg({"Vehicle": lambda x: x.nunique()})
                         .reset_index()
                     )
                     area_network = (
@@ -269,15 +274,30 @@ def register_callbacks(app):
                         .agg({"Vehicle": "mean"})
                         .reset_index()
                     )
+                    area_network.fillna(value={"Vehicle": 0})
+
                 elif timeline_type == "sum":
                     area_network = (
                         network.groupby(["Mobility mode", "Timestep"], observed=False)
-                        .agg({"Vehicle": pd.Series.nunique})
+                        .agg({"Vehicle": lambda x: x.nunique()})
                         .reset_index()
                     )
+                    area_network = (
+                        area_network.groupby(
+                            ["Mobility mode", "Timestep"], observed=False
+                        )
+                        .agg({"Vehicle": "sum"})
+                        .reset_index()
+                    )
+                    area_network.fillna(value={"Vehicle": 0})
 
                 # Draw the area chart
-                area_plot = uh.create_area_chart(network=network, variable=variable)
+                area_plot = uh.create_area_chart(
+                    network=area_network, variable="Vehicle"
+                )
+                # area_plot.update_layout(
+                #     yaxis_title={"Vehicle": "Mobility flow"},
+                # )
                 third_plot = dcc.Graph(
                     figure=area_plot,
                     responsive=True,
@@ -317,7 +337,10 @@ def register_callbacks(app):
                 )
                 # Draw the bar plot
                 bar_plot = uh.create_mobility_mode_avg_bar_plot(
-                    network=network, variable=variable
+                    network=barplot_network, variable=variable
+                )
+                bar_plot.update_layout(
+                    xaxis_title=f"Average {variable.lower()} in seconds"
                 )
                 # Output the plot
                 third_plot = dcc.Graph(
@@ -330,9 +353,131 @@ def register_callbacks(app):
                     },
                 )
 
-            # Noise, Speed or one of AQ variables
+            elif tab == lc.OBJECTIVES[1] and variable in ["Noise"]:
+                # Calculate the data
+                network = uh.get_data(
+                    area=area,
+                    season=season,
+                    time=time,
+                    demand=demand,
+                    optimization=traffic_priority,
+                    situation=situation,
+                    variable=variable,
+                )
+                network = uh.new_timeline(
+                    network=network, timestep_range=timestep_range
+                )
+                second_network = uh.get_data(
+                    area=area,
+                    season=season,
+                    time=time,
+                    demand=demand,
+                    optimization=traffic_priority,
+                    situation=situation,
+                    variable="Noise2",
+                )
+                second_network = uh.new_timeline(
+                    network=second_network, timestep_range=timestep_range
+                )
+                # network, current_location = uh.spatial_scope(
+                #     spatial_click_data, network
+                # )
+                # helper_network = (
+                #     second_network.groupby(["Timestep", "Edge"], observed=False)
+                #     .agg(
+                #         {
+                #             "Mobility flow": "sum",
+                #         }
+                #     )
+                #     .reset_index()
+                # )
+                # network = network.merge(
+                #     helper_network[["Edge", "Mobility flow", "Timestep"]],
+                #     on=["Edge", "Timestep"],
+                #     how="left",
+                # )
+                # print(network.head())
+                heatmap_network = (
+                    network.groupby(["Timestep", "Edge"], observed=False)
+                    .agg(
+                        {
+                            variable: "mean",
+                            "Longitude": "first",
+                            "Latitude": "first",
+                            "Name": "first",
+                            "Mobility flow": "sum",
+                        }
+                    )
+                    .reset_index()
+                )
+                heatmap_network.fillna(value={variable: 0})
+                # Draw the heatmap
+                heatmap = uh.create_heatmap(network=heatmap_network, variable=variable)
+                first_plot = html.Div(
+                    [
+                        dcc.Graph(
+                            figure=heatmap,
+                            responsive=True,
+                            style={
+                                "height": "50vw",
+                                "width": "55vw",
+                                "paddingBottom": "2vh",
+                            },
+                        ),
+                        lc.plots_location_text,
+                        lc.plots_reset_button,
+                    ]
+                )
+
+                # Calculate the data
+                barplot_network = (
+                    second_network.groupby(["Mobility mode"], observed=False)
+                    .agg({variable: "mean", "Vehicle": pd.Series.nunique})
+                    .reset_index()
+                )
+                # barplot_network["Vehicle average"] = np.round(
+                #     barplot_network[variable] / barplot_network["Mobility flow"], 4
+                # )
+                # Draw the bar plot
+                bar_plot = uh.create_mobility_mode_avg_bar_plot(
+                    network=barplot_network, variable=variable
+                )
+                # Output the plot
+                second_plot = dcc.Graph(
+                    figure=bar_plot,
+                    responsive=True,
+                    style={"height": "30vw"},
+                )
+
+                # Calculate the data
+                area_network = (
+                    second_network.groupby(
+                        ["Mobility mode", "Timestep"], observed=False
+                    )
+                    .agg({"Vehicle": pd.Series.nunique, variable: "mean"})
+                    .reset_index()
+                )
+
+                # Draw the area chart
+                area_plot = uh.create_area_chart(
+                    network=area_network, variable=variable
+                )
+                # area_plot.update_layout(
+                #     labels={"Vehicle": "Mobility flow"},
+                # )
+                third_plot = dcc.Graph(
+                    figure=area_plot,
+                    responsive=True,
+                    style={
+                        "height": "30vw",
+                        "paddingBottom": "2vh",
+                        "paddingTop": "2vh",
+                    },
+                )
+
+            # Noise
             # Heatmap + bar plot + area chart
-            elif tab == lc.OBJECTIVES[1] and variable in ["Noise", "Speed"]:
+            elif tab == lc.OBJECTIVES[1] and variable in ["Speed"]:
                 # Calculate the data
                 network = uh.get_data(
                     area=area,
@@ -383,12 +528,12 @@ def register_callbacks(app):
                 # Calculate the data
                 barplot_network = (
                     network.groupby(["Mobility mode"], observed=False)
-                    .agg({variable: "sum", "Mobility flow": "sum"})
+                    .agg({variable: "mean", "Vehicle": pd.Series.nunique})
                     .reset_index()
                 )
-                barplot_network["Vehicle average"] = np.round(
-                    barplot_network[variable] / barplot_network["Mobility flow"], 4
-                )
+                # barplot_network["Vehicle average"] = np.round(
+                #     barplot_network[variable] / barplot_network["Mobility flow"], 4
+                # )
                 # Draw the bar plot
                 bar_plot = uh.create_mobility_mode_avg_bar_plot(
                     network=barplot_network, variable=variable
@@ -401,21 +546,52 @@ def register_callbacks(app):
                 )
 
                 # Calculate the data
+                # area_network = (
+                #     network.groupby(["Timestep"], observed=False)
+                #     .agg(
+                #         {
+                #             variable: timeline_type,
+                #             "Mobility flow": timeline_type,
+                #             "Mobility mode": "first",
+                #         }
+                #     )
+                #     .reset_index()
+                # )
+                # # Draw the area chart
+                # area_plot = uh.create_area_chart(
+                #     network=area_network, variable=variable
+                # )
+                # Calculate data
+                # if timeline_type == "mean":
+                #     # area_network = (
+                #     #     network.groupby(
+                #     #         ["Mobility mode", "Simulation timestep", "Timestep"],
+                #     #         observed=False,
+                #     #     )
+                #     #     .agg({"Vehicle": pd.Series.nunique, variable: "median"})
+                #     #     .reset_index()
+                #     # )
+                #     area_network = (
+                #         network.groupby(
+                #             ["Mobility mode", "Timestep"], observed=False
+                #         )
+                #         .agg({"Vehicle": pd.Series.nunique, variable: "mean"})
+                #         .reset_index()
+                #     )
+                # elif timeline_type == "sum":
                 area_network = (
-                    network.groupby(["Timestep"], observed=False)
-                    .agg(
-                        {
-                            variable: timeline_type,
-                            "Mobility flow": timeline_type,
-                            "Mobility mode": "first",
-                        }
-                    )
+                    network.groupby(["Mobility mode", "Timestep"], observed=False)
+                    .agg({"Vehicle": pd.Series.nunique, variable: "mean"})
                     .reset_index()
                 )
+
                 # Draw the area chart
                 area_plot = uh.create_area_chart(
                     network=area_network, variable=variable
                 )
+                # area_plot.update_layout(
+                #     labels={"Vehicle": "Mobility flow"},
+                # )
                 third_plot = dcc.Graph(
                     figure=area_plot,
                     responsive=True,
@@ -425,6 +601,7 @@ def register_callbacks(app):
                         "paddingTop": "2vh",
                     },
                 )
+            # AQ variables
             elif tab == lc.OBJECTIVES[2]:
                 # Calculate the data
                 network = uh.get_data(
@@ -494,21 +671,50 @@ def register_callbacks(app):
                 )
 
                 # Calculate the data
-                area_network = (
-                    network.groupby(["Timestep"], observed=False)
-                    .agg(
-                        {
-                            variable: timeline_type,
-                            "Mobility flow": timeline_type,
-                            "Mobility mode": "first",
-                        }
+                # area_network = (
+                #     network.groupby(["Timestep"], observed=False)
+                #     .agg(
+                #         {
+                #             variable: timeline_type,
+                #             "Mobility flow": timeline_type,
+                #             "Mobility mode": "first",
+                #         }
+                #     )
+                #     .reset_index()
+                # )
+                # # Draw the area chart
+                # area_plot = uh.create_area_chart(
+                #     network=area_network, variable=variable
+                # )
+                # Calculate data
+                if timeline_type == "mean":
+                    area_network = (
+                        network.groupby(
+                            ["Mobility mode", "Simulation timestep", "Timestep"],
+                            observed=False,
+                        )
+                        .agg({"Vehicle": pd.Series.nunique, variable: timeline_type})
+                        .reset_index()
                     )
-                    .reset_index()
-                )
+                    area_network = (
+                        area_network.groupby(
+                            ["Mobility mode", "Timestep"], observed=False
+                        )
+                        .agg({"Vehicle": "mean", variable: timeline_type})
+                        .reset_index()
+                    )
+                elif timeline_type == "sum":
+                    area_network = (
+                        network.groupby(["Mobility mode", "Timestep"], observed=False)
+                        .agg({"Vehicle": pd.Series.nunique, variable: timeline_type})
+                        .reset_index()
+                    )
+
                 # Draw the area chart
-                area_plot = uh.create_area_chart(
-                    network=area_network, variable=variable
-                )
+                area_plot = uh.create_area_chart(network=network, variable="Vehicle")
+                # area_plot.update_layout(
+                #     labels={"Vehicle": "Mobility flow"},
+                # )
                 third_plot = dcc.Graph(
                     figure=area_plot,
                     responsive=True,
