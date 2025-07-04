@@ -183,10 +183,10 @@ def register_callbacks(app):
         ]
         params_ready = all(param is not None for param in params)
         # Initialize outputs
-        first_plot = {}
-        second_plot = {}
-        third_plot = {}
-        summary_text = {}
+        first_plot = []
+        second_plot = []
+        third_plot = []
+        summary_text = []
         # current_location = """Location: Network"""
         # Summary
         if tab == lc.OBJECTIVES[0]:
