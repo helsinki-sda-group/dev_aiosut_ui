@@ -166,7 +166,7 @@ simulation_time_col = dbc.Col(
             dcc.Dropdown(
                 options=WEEKDAYS,
                 value=WEEKDAYS[0]["value"],
-                # placeholder="Select...",
+                # placeholder="Select time of week...",
                 id="crossfilter-time",
                 optionHeight=50,
                 style={"font-size": "1.1em"},
@@ -198,7 +198,7 @@ simulation_demand_col = dbc.Col(
             dcc.Dropdown(
                 options=MOBILITY_DEMAND,
                 value=MOBILITY_DEMAND[1]["value"],
-                # placeholder="Select...",
+                # placeholder="Select demand...",
                 id="crossfilter-demand",
                 optionHeight=50,
                 style={"font-size": "1.1em"},
@@ -229,7 +229,7 @@ simulation_area_col = dbc.Col(
             ),
             dcc.Dropdown(
                 options=AREAS,
-                # placeholder="Select...",
+                # placeholder="Select area...",
                 value=AREAS[2]["value"],
                 id="crossfilter-area",
                 optionHeight=50,
@@ -261,7 +261,7 @@ simulation_season_col = dbc.Col(
             ),
             dcc.Dropdown(
                 options=SEASONS,
-                # placeholder="Select...",
+                # placeholder="Select season...",
                 value=SEASONS[2]["value"],
                 id="crossfilter-season",
                 optionHeight=50,
@@ -591,7 +591,7 @@ viz_temporal_resolution_col = dbc.Col(
             ),
             dcc.Dropdown(
                 options=TIMELINE_FUNCTIONS,
-                placeholder="Select...",
+                placeholder="Select function...",
                 id="crossfilter-timeline-type",
                 optionHeight=50,
                 style={"font-size": "1.1em"},
@@ -625,7 +625,7 @@ viz_timestep_interval_col = dbc.Col(
             ),
             dcc.Dropdown(
                 options=TIMESTEPS,
-                placeholder="Select...",
+                placeholder="Select resolution...",
                 id="crossfilter-timestep",
                 optionHeight=50,
                 style={"font-size": "1.1em"},
@@ -659,7 +659,7 @@ viz_variable_col = dbc.Col(
             ),
             dcc.Dropdown(
                 options=TRAFFIC_VARIABLES,
-                placeholder="Select...",
+                placeholder="Select variable...",
                 id="crossfilter-variable",
                 optionHeight=50,
                 style={"font-size": "1.1em"},
@@ -693,7 +693,7 @@ viz_situation_col = dbc.Col(
             ),
             dcc.Dropdown(
                 options=SITUATIONS,
-                placeholder="Select...",
+                placeholder="Select situation...",
                 id="crossfilter-situation",
                 optionHeight=50,
                 style={"fontSize": "1.1em"},
