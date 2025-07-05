@@ -4,6 +4,7 @@ venv
 *.pyc
 .DS_Store
 .env
+mini_app.py
 *.gz
 *.csv
 !*.csv.gz
