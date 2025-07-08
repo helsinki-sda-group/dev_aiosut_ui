@@ -809,7 +809,7 @@ def _plots_section():
                         [],
                         id="summary-text",
                     ),
-                    # Figure one
+                    # First graph
                     html.Div(
                         [],
                         id="figure-one-div",
@@ -823,6 +823,11 @@ def _plots_section():
                     html.Div(
                         [],
                         id="figure-three-div",
+                    ),
+                    # Fourth graph
+                    html.Div(
+                        [],
+                        id="figure-four-div",
                     ),
                 ]
             ),

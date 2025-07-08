@@ -224,7 +224,65 @@ def create_mobility_mode_avg_bar_plot(network, variable):
         bargap=0.5,
         xaxis_title=f"Average {variable.lower()} ({uc.UNITS[variable]})",
         yaxis_title="Mobility mode",
-        xaxis=dict(range=[0, network[variable].max() * 1.1]),
+        xaxis=dict(range=[0, network[variable].median() * 1.75]),
+    )
+    return bar_plot
+
+
+def create_traffic_situation_bar_plot(
+    baseline_network,
+    optimized_network,
+    variable,
+    xaxis_title,
+):
+    """Creates a bar plot for two situational variables."""
+    baseline_network["Situation"] = "Baseline"
+    optimized_network["Situation"] = "Optimized"
+    combined_network = pd.concat([baseline_network, optimized_network])
+    bar_plot = px.bar(
+        data_frame=combined_network,
+        x=variable,
+        y="Mobility mode",
+        color="Situation",
+        title=f"{variable.capitalize()}",
+        barmode="group",
+    )
+    # Customize the hovers, title, axis labels and legend
+    bar_plot.update_layout(
+        hoverlabel=hover_layout,
+        title_x=0.11,
+        bargap=0.5,
+        xaxis_title=xaxis_title,
+        xaxis=dict(range=[0, combined_network[variable].median() * 1.75]),
+    )
+    return bar_plot
+
+
+def create_situation_bar_plot(
+    baseline_network,
+    optimized_network,
+    variable,
+    xaxis_title,
+):
+    """Creates a bar plot for two situational variables."""
+    baseline_network["Situation"] = "Baseline"
+    optimized_network["Situation"] = "Optimized"
+    combined_network = pd.concat([baseline_network, optimized_network])
+    bar_plot = px.bar(
+        data_frame=combined_network,
+        x=variable,
+        y="Situation",
+        # color="Situation",
+        title=f"{variable.capitalize()}",
+        barmode="group",
+    )
+    # Customize the hovers, title, axis labels and legend
+    bar_plot.update_layout(
+        hoverlabel=hover_layout,
+        title_x=0.11,
+        bargap=0.5,
+        xaxis_title=xaxis_title,
+        xaxis=dict(range=[0, combined_network[variable].median() * 1.75]),
     )
     return bar_plot
 

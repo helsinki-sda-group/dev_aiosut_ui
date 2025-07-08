@@ -86,8 +86,8 @@ UNITS = {
     "Mobility flow": "# of vehicles",
     "Vehicle": "# of vehicles",
     "Speed": "m/s",
-    "Travel time": "# of trips",
-    "Lost time": "# of trips",
+    "Travel time": "in seconds",
+    "Lost time": "in seconds",
     "Noise": "dB",
     "Carbon monoxide": "mg",
     "Carbon dioxide": "mg",
@@ -171,6 +171,7 @@ FROM_VAR_TO_DATA_COLS = {
             "Carbon monoxide",
             "Mobility mode",
             "Mobility flow",
+            "Vehicle",
         ],
     ),
     "Carbon dioxide": (
@@ -184,6 +185,7 @@ FROM_VAR_TO_DATA_COLS = {
             "Carbon dioxide",
             "Mobility mode",
             "Mobility flow",
+            "Vehicle",
         ],
     ),
     "Hydrocarbon": (
@@ -197,6 +199,7 @@ FROM_VAR_TO_DATA_COLS = {
             "Hydrocarbon",
             "Mobility mode",
             "Mobility flow",
+            "Vehicle",
         ],
     ),
     "Nitrogen oxides": (
@@ -210,6 +213,7 @@ FROM_VAR_TO_DATA_COLS = {
             "Nitrogen oxides",
             "Mobility mode",
             "Mobility flow",
+            "Vehicle",
         ],
     ),
     "Respirable particles": (
@@ -223,6 +227,7 @@ FROM_VAR_TO_DATA_COLS = {
             "Respirable particles",
             "Mobility mode",
             "Mobility flow",
+            "Vehicle",
         ],
     ),
     "Fine particles": (
@@ -236,6 +241,7 @@ FROM_VAR_TO_DATA_COLS = {
             "Fine particles",
             "Mobility mode",
             "Mobility flow",
+            "Vehicle",
         ],
     ),
     "Relocation rate": (
