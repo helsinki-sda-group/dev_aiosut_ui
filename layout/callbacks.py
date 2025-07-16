@@ -255,7 +255,7 @@ def register_callbacks(app):
                 optimized_network=optimized_avg_travel_network,
                 baseline_network=baseline_avg_travel_network,
                 variable="Mobility flow",
-                xaxis_title=f"Mobility flow ({uc.UNITS["Mobility flow"]})",
+                xaxis_title=f"Mobility flow ({uc.UNITS['Mobility flow']})",
             )
             first_plot = dcc.Graph(
                 figure=mobility_flow_bar,
@@ -271,7 +271,7 @@ def register_callbacks(app):
                 optimized_network=optimized_avg_travel_network,
                 baseline_network=baseline_avg_travel_network,
                 variable="Travel time",
-                xaxis_title=f"Average travel time ({uc.UNITS["Travel time"]})",
+                xaxis_title=f"Average travel time ({uc.UNITS['Travel time']})",
             )
             second_plot = dcc.Graph(
                 figure=travel_time_bar,
@@ -322,7 +322,7 @@ def register_callbacks(app):
                 optimized_network=optimized_avg_AQ_network,
                 baseline_network=baseline_avg_AQ_network,
                 variable="Respirable particles",
-                xaxis_title=f"Average respirable particles ({uc.UNITS["Respirable particles"]})",
+                xaxis_title=f"Average respirable particles ({uc.UNITS['Respirable particles']})",
             )
             third_plot = dcc.Graph(
                 figure=aq_bar,
