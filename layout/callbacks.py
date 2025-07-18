@@ -255,7 +255,7 @@ def register_callbacks(app):
                 optimized_network=optimized_avg_travel_network,
                 baseline_network=baseline_avg_travel_network,
                 variable="Mobility flow",
-                xaxis_title=f"Mobility flow ({uc.UNITS['Mobility flow']})",
+                xaxis_title=f"Mobility flow\n({uc.UNITS['Mobility flow']})",
             )
             first_plot = dcc.Graph(
                 figure=mobility_flow_bar,
@@ -271,7 +271,7 @@ def register_callbacks(app):
                 optimized_network=optimized_avg_travel_network,
                 baseline_network=baseline_avg_travel_network,
                 variable="Travel time",
-                xaxis_title=f"Average travel time ({uc.UNITS['Travel time']})",
+                xaxis_title=f"Average travel time\n({uc.UNITS['Travel time']})",
             )
             second_plot = dcc.Graph(
                 figure=travel_time_bar,
@@ -322,7 +322,7 @@ def register_callbacks(app):
                 optimized_network=optimized_avg_AQ_network,
                 baseline_network=baseline_avg_AQ_network,
                 variable="Respirable particles",
-                xaxis_title=f"Average respirable particles ({uc.UNITS['Respirable particles']})",
+                xaxis_title=f"Average respirable particles\n({uc.UNITS['Respirable particles']})",
             )
             third_plot = dcc.Graph(
                 figure=aq_bar,
@@ -406,7 +406,7 @@ def register_callbacks(app):
             )
         # Params required
         elif all_params_ready:
-            # Mobility flow or AQ
+            # Mobility flow
             if tab == lc.OBJECTIVES[1] and variable == "Mobility flow":
                 # Calculate data
                 network = uh.get_data(
@@ -490,9 +490,6 @@ def register_callbacks(app):
                 area_plot = uh.create_area_chart(
                     network=area_network, variable="Vehicle"
                 )
-                # area_plot.update_layout(
-                #     yaxis_title={"Vehicle": "Mobility flow"},
-                # )
                 third_plot = dcc.Graph(
                     figure=area_plot,
                     responsive=True,
@@ -848,17 +845,9 @@ def register_callbacks(app):
                         .reset_index()
                     )
 
-                    area_network = (
-                        network.groupby(["Mobility mode", "Timestep"], observed=False)
-                        .agg({"Vehicle": timeline_type, variable: timeline_type})
-                        .reset_index()
-                    )
-
                 # Draw the area chart
-                area_plot = uh.create_area_chart(network=network, variable="Vehicle")
-                # area_plot.update_layout(
-                #     labels={"Vehicle": "Mobility flow"},
-                # )
+                area_plot = uh.create_area_chart(network=area_network, variable="Vehicle")
+                # Output the plot
                 third_plot = dcc.Graph(
                     figure=area_plot,
                     responsive=True,

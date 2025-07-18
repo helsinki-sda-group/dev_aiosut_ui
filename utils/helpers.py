@@ -186,7 +186,7 @@ def create_heatmap(network, variable):
             variable: True,
         },
         animation_frame="Timestep",
-        title="Network heatmap",
+        title=f"{variable.capitalize()} heatmap",
     )
     # Customize the sliders with a larger font size and prefix
     sliders = [
@@ -202,10 +202,7 @@ def create_heatmap(network, variable):
         sliders=sliders,
         map_bounds=map_bounds(network=network),
     )
-    # Sets the variable name and its unit as a legend to the color bar
-    heatmap.layout["coloraxis"]["colorbar"][
-        "title"
-    ] = f"{variable} ({uc.UNITS[variable]})"
+    heatmap.update_coloraxes(colorbar_title_text = f"{uc.UNITS[variable]}")
     return heatmap
 
 
@@ -222,7 +219,7 @@ def create_mobility_mode_avg_bar_plot(network, variable):
         hoverlabel=hover_layout,
         title_x=0.11,
         bargap=0.5,
-        xaxis_title=f"Average {variable.lower()} ({uc.UNITS[variable]})",
+        xaxis_title=f"{uc.UNITS[variable]}",
         yaxis_title="Mobility mode",
         xaxis=dict(range=[0, network[variable].median() * 1.75]),
     )
@@ -295,13 +292,13 @@ def create_area_chart(network, variable):
         x="Timestep",
         y=variable,
         color="Mobility mode",
-        # color_discrete_sequence=px.colors.sequential.Plasma_r,
         title="Mobility mode time series",
+        labels={"Vehicle": "Mobility flow"}
     )
     # Customize the title and yaxis
     area_plot.update_layout(
         title_x=0.11,
-        yaxis_title=f"{variable} ({uc.UNITS[variable]})",
+        yaxis_title=f"{uc.UNITS[variable]}",
     )
     # Output the plot
     return area_plot
