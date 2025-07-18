@@ -317,6 +317,7 @@ def create_mobility_mode_histogram(network, variable):
         yaxis_title=uc.UNITS[variable],
         bargap=0.2,
         xaxis_title=f"{variable}",
+        title_x=0.5,
     )
     # Output the plot
     return histogram
