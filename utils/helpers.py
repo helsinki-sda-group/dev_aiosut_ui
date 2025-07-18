@@ -100,7 +100,7 @@ def get_data(
     season="summer",
     time="weekday",
     situation="baseline",
-    optimization=None,
+    optimization=0,
     variable="Mobility flow",
 ):
     """
@@ -138,7 +138,7 @@ def get_data(
                 "scenarios",
                 f"{area.lower()}",
                 f"{demand.lower()}_{season.lower()}_{time.lower()}",
-                f"{situation.lower()}_{uc.OPTIMIZATION[optimization]}",
+                f"{situation.lower()}_{uc.OPTIMIZATION_SLIDER_VALUES[optimization]}",
                 f"{helper_dataset_name}.csv.gz",
             )
         else:
@@ -201,6 +201,7 @@ def create_heatmap(network, variable):
         clickmode="event+select",
         sliders=sliders,
         map_bounds=map_bounds(network=network),
+        title_x=0.5,
     )
     heatmap.update_coloraxes(colorbar_title_text = f"{uc.UNITS[variable]}")
     return heatmap
@@ -217,7 +218,7 @@ def create_mobility_mode_avg_bar_plot(network, variable):
     # Customize the hovers, title, axis labels and legend
     bar_plot.update_layout(
         hoverlabel=hover_layout,
-        title_x=0.11,
+        title_x=0.5,
         bargap=0.5,
         xaxis_title=f"{uc.UNITS[variable]}",
         yaxis_title="Mobility mode",
@@ -231,6 +232,7 @@ def create_traffic_situation_bar_plot(
     optimized_network,
     variable,
     xaxis_title,
+    title,
 ):
     """Creates a bar plot for two situational variables."""
     baseline_network["Situation"] = "Baseline"
@@ -241,16 +243,17 @@ def create_traffic_situation_bar_plot(
         x=variable,
         y="Mobility mode",
         color="Situation",
-        title=f"{variable.capitalize()}",
+        title=title,
         barmode="group",
     )
     # Customize the hovers, title, axis labels and legend
     bar_plot.update_layout(
         hoverlabel=hover_layout,
-        title_x=0.11,
+        title_x=0.5,
         bargap=0.5,
         xaxis_title=xaxis_title,
         xaxis=dict(range=[0, combined_network[variable].median() * 1.75]),
+        title=title,
     )
     return bar_plot
 
@@ -260,6 +263,7 @@ def create_situation_bar_plot(
     optimized_network,
     variable,
     xaxis_title,
+    title,
 ):
     """Creates a bar plot for two situational variables."""
     baseline_network["Situation"] = "Baseline"
@@ -269,14 +273,13 @@ def create_situation_bar_plot(
         data_frame=combined_network,
         x=variable,
         y="Situation",
-        # color="Situation",
-        title=f"{variable.capitalize()}",
+        title=title,
         barmode="group",
     )
     # Customize the hovers, title, axis labels and legend
     bar_plot.update_layout(
         hoverlabel=hover_layout,
-        title_x=0.11,
+        title_x=0.5,
         bargap=0.5,
         xaxis_title=xaxis_title,
         xaxis=dict(range=[0, combined_network[variable].median() * 1.75]),
@@ -297,7 +300,7 @@ def create_area_chart(network, variable):
     )
     # Customize the title and yaxis
     area_plot.update_layout(
-        title_x=0.11,
+        title_x=0.5,
         yaxis_title=f"{uc.UNITS[variable]}",
     )
     # Output the plot

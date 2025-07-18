@@ -255,7 +255,8 @@ def register_callbacks(app):
                 optimized_network=optimized_avg_travel_network,
                 baseline_network=baseline_avg_travel_network,
                 variable="Mobility flow",
-                xaxis_title=f"Mobility flow\n({uc.UNITS['Mobility flow']})",
+                xaxis_title=f"{uc.UNITS['Mobility flow']}",
+                title="Mobility mode distribution",
             )
             first_plot = dcc.Graph(
                 figure=mobility_flow_bar,
@@ -271,7 +272,8 @@ def register_callbacks(app):
                 optimized_network=optimized_avg_travel_network,
                 baseline_network=baseline_avg_travel_network,
                 variable="Travel time",
-                xaxis_title=f"Average travel time\n({uc.UNITS['Travel time']})",
+                xaxis_title=f"{uc.UNITS['Travel time']}",
+                title="Average travel time",
             )
             second_plot = dcc.Graph(
                 figure=travel_time_bar,
@@ -296,7 +298,7 @@ def register_callbacks(app):
             baseline_avg_AQ_network = pd.DataFrame(
                 data={
                     "Respirable particles": [
-                        baseline_AQ_network["Respirable particles"].mean()
+                        baseline_AQ_network["Respirable particles"].sum()
                     ]
                 }
             )
@@ -313,7 +315,7 @@ def register_callbacks(app):
             optimized_avg_AQ_network = pd.DataFrame(
                 data={
                     "Respirable particles": [
-                        optimized_AQ_network["Respirable particles"].mean()
+                        optimized_AQ_network["Respirable particles"].sum()
                     ]
                 }
             )
@@ -322,7 +324,8 @@ def register_callbacks(app):
                 optimized_network=optimized_avg_AQ_network,
                 baseline_network=baseline_avg_AQ_network,
                 variable="Respirable particles",
-                xaxis_title=f"Average respirable particles\n({uc.UNITS['Respirable particles']})",
+                xaxis_title=f"{uc.UNITS['Respirable particles']}",
+                title="Respirable particles",
             )
             third_plot = dcc.Graph(
                 figure=aq_bar,
