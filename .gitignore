@@ -9,3 +9,4 @@ mini_app.py
 *.csv
 !*.csv.gz
 !simulation/scenarios/all_scenarios.csv
+.pytest_cache
