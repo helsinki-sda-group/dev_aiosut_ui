@@ -333,6 +333,7 @@ simulation_info_collapse = dbc.Collapse(
                             * *Time of week* refers to what day should be simulated. *Weekday* means it is time to hurry to work between Monday and Friday and *Weekend* is for that relaxed sightseeing on Saturday or Sunday.
                             * *Area* changes what area is being simulated. Trying to take it all in all at once made our head spin (the AI's too), so we made a tour around the city instead.
                             * *Demand* decides how much mobility is going on. *Regular* projection refers to what one would expect to see based on the historical data; *Low* scales the regular projection down by 20%, while *High* increases it by 20%.
+                            * *Priority* refers to how important the objective is for you. It helps the AI when it is comparing apples into oranges: you need more apples from the higher priority objective for it to be equal to the lower priority objective's orange.
                             """,
                 link_target="_blank",
             ),
