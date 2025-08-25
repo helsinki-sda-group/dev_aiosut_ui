@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+    <input>
+        <net-file value="input\net.xml"/>
+        <route-files value="input\rou.xml"/>
+        <additional-files value="add.xml"/>
+    </input>
+    <output>
+        <tripinfo-output value="output\trip_results.xml"/>
+        <emission-output value="output\emission_results.xml" excludeEmpty="false"/>
+    </output>
+</configuration>

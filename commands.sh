@@ -5,7 +5,9 @@ python -m pip install -r "requirements.txt"
 export PYTHONPATH="$SUMO_HOME/tools:$PYTHONPATH"
 
 # Run the simulation
-python "./simulation/functions.py"
+# python -c 'import ./utils/helpers as uh; uh.run_simulation()'
 
-# Run the visualization app in browser
-python -m jupyter notebook "./tool/app.ipynb"
+# Run the visualization app
+python -m "new_app.py"
+
+# Finally, click on the link in the terminal output!
