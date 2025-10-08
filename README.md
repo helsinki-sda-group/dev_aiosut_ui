@@ -10,7 +10,7 @@ AioSUT is a RCF-funded project about developing an AI-based optimization tool fo
    - **Git for Windows, if using Windows**: Download the latest Git for Windows from [Git's official website](https://gitforwindows.org/).
 2. Clone the repository
 3. Run `sh commands.sh` in the command line in the root folder
-4. Once the `app.ipynb` opens in the browser, run All Cells of the notebook
+4. Once the terminal has finished printing the link, click on it
 5. Success!
 
 ## Developer Guide
