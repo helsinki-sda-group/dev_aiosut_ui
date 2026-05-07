@@ -41,6 +41,65 @@ The project follows a relaxed development pipeline by using issues, pull request
     - file configurations for the simulation, `.sumocfg`
     - In each area folder, there is a sub-folder `output` for the simulation outputs.
 
+### Preparing simulation data (CSV.GZ files)
+
+The UI reads pre-processed `.csv.gz` files from `simulation/scenarios/<area>/<scenario>/`. These are produced from raw SUMO output by running a simulation via `run_simulation()` in `utils/helpers.py`, or by manually calling `aggregate_outputs()` on an existing SUMO output folder. The full pipeline is:
+
+#### 1. Run the SUMO simulation
+
+SUMO must be installed and the `SUMO_HOME` environment variable must point to its installation directory. The simulation is run for 3600 seconds (1 hour) at 1-second time resolution. It produces two raw XML output files in the scenario output folder:
+
+- `emission_results.xml` — per-vehicle, per-second emissions (CO₂, CO, HC, NOx, PMx), speed, noise, fuel/electricity consumption, and vehicle class.
+- `trip_results.xml` — per-trip travel time, lost time, and route information.
+- `edge_noise_results.xml` — per-edge noise levels aggregated by the `add.xml` additional file.
+
+The emission output uses the **HBEFA4** model with two vehicle types defined in `rou.xml`:
+- `HBEFA4/PC_petrol_ltECE` — petrol passenger car (pre-ECE standard)
+- `HBEFA4/PC_BEV` — battery electric vehicle (zero tailpipe emissions)
+
+#### 2. Convert XML outputs to CSV.GZ
+
+After the simulation finishes, call `aggregate_outputs()` with the paths to the baseline network file and the scenario output folder:
+
+```python
+from utils.helpers import aggregate_outputs
+
+aggregate_outputs(
+    net_path="simulation/scenarios/kamppi/baseline_net.xml",
+    full_output_folder="simulation/scenarios/kamppi/regular_autumn_weekday/baseline",
+)
+```
+
+This function:
+1. Parses `baseline_net.xml` to extract edge/lane geometry (coordinates, edge IDs).
+2. For each XML file in the output folder:
+   - Parses the XML into a pandas DataFrame.
+   - Merges with the network geometry to attach `Longitude`, `Latitude`, and `Edge` to each record.
+   - Saves the result as a gzip-compressed CSV (`.csv.gz`) alongside the original XML.
+   - Deletes the raw XML file.
+
+The resulting `.csv.gz` files have **1-second time resolution** (`Simulation timestep` column in seconds) and are what the UI loads at runtime. The UI then re-bins the data into the user-selected temporal resolution (1 min, 15 min, 30 min, or 60 min) on the fly.
+
+#### Expected folder structure
+
+```
+simulation/
+  scenarios/
+    <area>/                          # e.g. kamppi
+      baseline_net.xml               # SUMO road network
+      add.xml                        # additional file (noise output config)
+      rou.xml                        # vehicle routes and types
+      <demand>_<season>_<day>/       # e.g. regular_autumn_weekday
+        baseline/
+          emission_results.csv.gz
+          edge_noise_results.csv.gz
+          trip_results.csv.gz
+        optimized_<weights>/
+          emission_results.csv.gz
+          edge_noise_results.csv.gz
+          trip_results.csv.gz
+```
+
 ## License
 
 Distributed under the MIT License. See the `LICENSE` -file for more information.
