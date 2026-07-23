@@ -5,6 +5,7 @@ import os
 import glob
 import plotly.express as px
 import utils.constants as uc
+# from . import constants as uc
 import sys
 import sumolib
 import random
@@ -789,42 +790,37 @@ def _modify_config(
 def aggregate_outputs(
     net_path="simulation/scenarios/kamppi/baseline_net.xml",
     full_output_folder="simulation/scenarios/kamppi/regular_summer_weekday/optimized_equal",
+    erase_xml=False,
 ):
     # Convert the output files of raw xml to gzipped csv
     net_df = _parse_net_xml(net_path)
-    xml_output_files = glob.glob(f"{full_output_folder}/*.xml*")
+    xml_output_files = glob.glob(f"{full_output_folder}/*.xml")
+    print(f"Found {len(xml_output_files)} XML output files in {full_output_folder}.")
     for filename in xml_output_files:
+        print(f"Processing {filename}...")
         file_without_extension = filename.split(".")[0]
-        with open(filename, "rb") as f_in:
-            with gzip.open(f"{filename}.gz", "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
-                os.remove(f_in)
-                # if "lane_noise" in f_out:
-                #     lane_noise = parse_lane_noise_xml(f_out, net_df)
-                #     lane_noise.to_csv(
-                #         f"{file_without_extension}.csv.gz",
-                #         compression="gzip",
-                #     )
-                if "edge_noise" in filename:
-                    edge_noise = _parse_edge_noise_xml(f_out, net_df)
-                    # print(edge_noise.head())
-                    edge_noise.to_csv(
-                        f"{file_without_extension}.csv.gz",
-                        compression="gzip",
-                    )
-                elif "trip" in filename:
-                    trip_info = _parse_trip_output_xml(f_out)
-                    trip_info.to_csv(
-                        f"{file_without_extension}.csv.gz",
-                        compression="gzip",
-                    )
-                elif "emission" in filename:
-                    emissions = _parse_emissions_xml(f_out, net_df)
-                    emissions.to_csv(
-                        f"{file_without_extension}.csv.gz",
-                        compression="zip",
-                    )
-                os.remove(f_out)
+
+        if "edge_noise" in filename:
+            result = _parse_edge_noise_xml(filename, net_df)
+        elif "trip" in filename:
+            result = _parse_trip_output_xml(filename)
+        elif "emission" in filename:
+            result = _parse_emissions_xml(filename, net_df)
+        else:
+            continue
+
+        output_name = os.path.splitext(os.path.basename(filename))[0]
+        csv_path = os.path.join(full_output_folder, f"{output_name}.csv")
+
+        result.to_csv(csv_path, index=False)
+        result.to_csv(
+            f"{csv_path}.gz",
+            index=False,
+            compression="gzip",
+        )
+
+        if erase_xml:
+            os.remove(filename)
 
 
 # Simulate

@@ -43,7 +43,7 @@ The project follows a relaxed development pipeline by using issues, pull request
 
 ### Preparing simulation data (CSV.GZ files)
 
-The UI reads pre-processed `.csv.gz` files from `simulation/scenarios/<area>/<scenario>/`. These are produced from raw SUMO output by running a simulation via `run_simulation()` in `utils/helpers.py`, or by manually calling `aggregate_outputs()` on an existing SUMO output folder. The full pipeline is:
+The UI reads pre-processed `.csv.gz` files from `simulation/scenarios/<area>/<scenario>/`. These are produced from raw SUMO output by running a simulation via `run_simulation()` in `utils/helpers.py`, or by manually calling `aggregate_outputs()` on an existing SUMO output folder (`utils/aggregate_outputs_cli.py`). The full pipeline is:
 
 #### 1. Run the SUMO simulation
 
@@ -76,9 +76,11 @@ This function:
    - Parses the XML into a pandas DataFrame.
    - Merges with the network geometry to attach `Longitude`, `Latitude`, and `Edge` to each record.
    - Saves the result as a gzip-compressed CSV (`.csv.gz`) alongside the original XML.
-   - Deletes the raw XML file.
+   - Deletes the raw XML file if `erase_xml=True`.
 
 The resulting `.csv.gz` files have **1-second time resolution** (`Simulation timestep` column in seconds) and are what the UI loads at runtime. The UI then re-bins the data into the user-selected temporal resolution (1 min, 15 min, 30 min, or 60 min) on the fly.
+
+Script `utils/aggregate_outputs_cli.py` can be used to produce `csv` and `csv.gz` files through command line from the existing SUMO outputs.
 
 #### Expected folder structure
 
