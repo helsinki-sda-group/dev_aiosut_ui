@@ -88,6 +88,8 @@ def normalize_range(array, x, y):
 # Helper function to read data
 def read_data(path):
     data = pd.read_csv(f"{path}", index_col=0)
+    data = data.loc[:, ~data.columns.str.match(r"^Unnamed")]
+
     data = data.infer_objects()
     if "Mobility mode" in data.columns:
         data["Mobility mode"] = pd.Categorical(data["Mobility mode"], ordered=True)
