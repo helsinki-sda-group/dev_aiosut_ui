@@ -80,7 +80,7 @@ This function:
 
 The resulting `.csv.gz` files have **1-second time resolution** (`Simulation timestep` column in seconds) and are what the UI loads at runtime. The UI then re-bins the data into the user-selected temporal resolution (1 min, 15 min, 30 min, or 60 min) on the fly.
 
-Script `utils/aggregate_outputs_cli.py` can be used to produce `csv` and `csv.gz` files through command line from the existing SUMO outputs.
+Script `utils/aggregate_outputs_cli.py` can be used to produce `csv` and `csv.gz` files through command line from the existing SUMO outputs. In this case, files will be read from and write to `--sumo-xml-folder` path.
 
 #### Expected folder structure
 

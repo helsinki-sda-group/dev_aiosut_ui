@@ -796,20 +796,30 @@ def aggregate_outputs(
     net_df = _parse_net_xml(net_path)
     xml_output_files = glob.glob(f"{full_output_folder}/*.xml")
     print(f"Found {len(xml_output_files)} XML output files in {full_output_folder}.")
+
+    output_names = {
+        "edge_noise": "edge_noise_results",
+        "emission": "emission_results",
+        "trip": "trip_results",
+    }
+
+
     for filename in xml_output_files:
         print(f"Processing {filename}...")
         file_without_extension = filename.split(".")[0]
 
         if "edge_noise" in filename:
             result = _parse_edge_noise_xml(filename, net_df)
-        elif "trip" in filename:
-            result = _parse_trip_output_xml(filename)
+            output_name = output_names["edge_noise"]
         elif "emission" in filename:
             result = _parse_emissions_xml(filename, net_df)
+            output_name = output_names["emission"]
+        elif "trip" in filename:
+            result = _parse_trip_output_xml(filename)
+            output_name = output_names["trip"]
         else:
             continue
 
-        output_name = os.path.splitext(os.path.basename(filename))[0]
         csv_path = os.path.join(full_output_folder, f"{output_name}.csv")
 
         result.to_csv(csv_path, index=False)
