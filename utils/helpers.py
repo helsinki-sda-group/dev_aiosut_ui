@@ -289,13 +289,18 @@ def create_cell_heatmap(network, grid, variable):
     # button advance the same frames used by manual slider selection.
     if figure.layout.updatemenus and figure.frames:
         play_button = figure.layout.updatemenus[0].buttons[0]
-        play_frames = list(figure.frames[::3])
-        if play_frames[-1].name != figure.frames[-1].name:
-            play_frames.append(figure.frames[-1])
+        if len(figure.frames) <= 4:
+            play_frames = list(figure.frames)
+            frame_duration = 1000
+        else:
+            play_frames = list(figure.frames[::3])
+            if play_frames[-1].name != figure.frames[-1].name:
+                play_frames.append(figure.frames[-1])
+            frame_duration = 750
         play_button.args = [
             [frame.name for frame in play_frames],
             {
-                "frame": {"duration": 750, "redraw": True},
+                "frame": {"duration": frame_duration, "redraw": True},
                 "mode": "afterall",
                 "fromcurrent": False,
                 "transition": {"duration": 0},
