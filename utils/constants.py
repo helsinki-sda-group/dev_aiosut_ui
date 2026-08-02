@@ -52,7 +52,7 @@ AREAS = [
     {"label": "Arabia", "value": "arabia", "disabled": True},
     {"label": "Jätkäsaari", "value": "high", "disabled": True},
     {"label": "Kamppi", "value": "kamppi"},
-    {"label": "Vihdintie", "value": "vihdintie", "disabled": True},
+    {"label": "Vihdintie", "value": "vihdintie"},
 ]
 TIMELINE_FUNCTIONS = [
     {"label": "Average", "value": "mean"},

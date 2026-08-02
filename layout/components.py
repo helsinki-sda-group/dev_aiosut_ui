@@ -230,7 +230,8 @@ simulation_area_col = dbc.Col(
             dcc.Dropdown(
                 options=AREAS,
                 # placeholder="Select area...",
-                value=AREAS[2]["value"],
+                # value=AREAS[2]["value"],
+                value="vihdintie",
                 id="crossfilter-area",
                 optionHeight=50,
                 style={"fontSize": "1.1em"},
