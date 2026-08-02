@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 import gzip
 import traci
 import shutil
+import json
 
 # Hover layout
 hover_layout = dict(bgcolor="white", font_size=16)
@@ -87,7 +88,9 @@ def normalize_range(array, x, y):
 
 # Helper function to read data
 def read_data(path):
-    data = pd.read_csv(f"{path}", index_col=0)
+    data = pd.read_csv(f"{path}")
+    data = data.loc[:, ~data.columns.str.match(r"^Unnamed")]
+
     data = data.infer_objects()
     if "Mobility mode" in data.columns:
         data["Mobility mode"] = pd.Categorical(data["Mobility mode"], ordered=True)
@@ -166,6 +169,167 @@ def get_data(
         )
     return dataset
 
+
+def get_cell_aq_data(
+    area="kamppi", demand="regular", season="summer", time="weekday",
+    situation="baseline", optimization=0, variable="AQI",
+):
+    """Load minute-resolution air-quality values and their cell geometry."""
+    scenario_dir = os.path.join(
+        "simulation", "scenarios", area.lower(),
+        f"{demand.lower()}_{season.lower()}_{time.lower()}",
+    )
+    result_dir = situation.lower()
+    if result_dir == "optimized":
+        result_dir += f"_{uc.OPTIMIZATION_SLIDER_VALUES[optimization]}"
+    csv_path = os.path.join(scenario_dir, result_dir, "emission_results_cells.csv")
+    if not os.path.exists(csv_path) and os.path.exists(csv_path + ".gz"):
+        csv_path += ".gz"
+    data = read_data(csv_path)
+    required = {"time", "cell_id", variable}
+    missing = required.difference(data.columns)
+    if missing:
+        raise ValueError(f"Missing columns in {csv_path}: {', '.join(sorted(missing))}")
+
+    # Only the minute component matters: 08:58 and 00:58 both map to minute 58.
+    parsed_time = pd.to_datetime(data["time"], errors="raise")
+    data = data[["cell_id", variable]].copy()
+    data["Minute"] = parsed_time.dt.minute
+
+    grid_candidates = [
+        os.path.join(scenario_dir, "AQ_grid.geojson"),
+        os.path.join("simulation", "scenarios", area.lower(), "AQ_grid.geojson"),
+    ]
+    grid_path = next((path for path in grid_candidates if os.path.exists(path)), None)
+    if grid_path is None:
+        raise FileNotFoundError("AQ_grid.geojson not found in the scenario or area folder")
+    with open(grid_path, encoding="utf-8") as grid_file:
+        grid = json.load(grid_file)
+    return data, grid
+
+
+def aggregate_cell_aq(data, variable, timestep_range, aggregation):
+    """Aggregate cells into minute, quarter, half-hour, or hour bins."""
+    data = data.copy()
+    data["Timestep"] = (data["Minute"] // timestep_range + 1) * timestep_range
+    return (
+        data.groupby(["Timestep", "cell_id"], observed=False)[variable]
+        .agg(aggregation)
+        .reset_index()
+    )
+
+
+def create_cell_heatmap(network, grid, variable):
+    """Create an animated polygon heatmap using Plotly's native controls."""
+    color_min = float(network[variable].min())
+    color_max = float(network[variable].max())
+    figure = px.choropleth_map(
+        network,
+        geojson=grid,
+        locations="cell_id",
+        featureidkey="properties.cell_id",
+        color=variable,
+        animation_frame="Timestep",
+        animation_group="cell_id",
+        map_style="open-street-map",
+        opacity=0.8,
+        color_continuous_scale="RdYlGn_r",
+        range_color=(color_min, color_max),
+        labels={variable: uc.UNITS[variable], "cell_id": "Cell"},
+        title=f"{variable} cell heatmap",
+    )
+    points = [point for feature in grid["features"]
+              for ring in feature["geometry"]["coordinates"] for point in ring]
+    west, east = min(p[0] for p in points), max(p[0] for p in points)
+    south, north = min(p[1] for p in points), max(p[1] for p in points)
+    figure.update_layout(
+        map={
+            "center": {"lon": (west + east) / 2, "lat": (south + north) / 2},
+            "zoom": 12.0,
+        },
+        width=800,
+        height=850,
+        autosize=False,
+        margin={"l": 0, "r": 0, "t": 50, "b": 0},
+        title_x=0.5,
+    )
+    # Lock the full-hour color axis and its tick grid. Explicit cmin/cmax and
+    # tick values prevent frame redraws from recalculating the legend geometry.
+    if color_min == color_max:
+        padding = abs(color_min) * 0.01 or 0.01
+        color_min -= padding
+        color_max += padding
+    color_ticks = np.linspace(color_min, color_max, 6)
+    figure.update_coloraxes(
+        cmin=color_min,
+        cmax=color_max,
+        cauto=False,
+        colorbar_title_text=uc.UNITS[variable],
+        colorbar_len=0.72,
+        colorbar_thickness=24,
+        colorbar_tickmode="array",
+        colorbar_tickvals=color_ticks.tolist(),
+        colorbar_ticktext=[f"{value:.4g}" for value in color_ticks],
+        colorbar_x=1.0,
+        colorbar_xanchor="right",
+        colorbar_y=0.5,
+        colorbar_yanchor="middle",
+        showscale=False,
+    )
+
+    # The legend is rendered outside this figure so it is never part of a map
+    # frame redraw. Hide it in both the initial trace and every frame.
+    figure.update_traces(showscale=False)
+    for frame in figure.frames:
+        for trace in frame.data:
+            trace.showscale = False
+
+    # Map traces need full redraws. Enumerating frame names makes the native Play
+    # button advance the same frames used by manual slider selection.
+    if figure.layout.updatemenus and figure.frames:
+        play_button = figure.layout.updatemenus[0].buttons[0]
+        if len(figure.frames) <= 4:
+            play_frames = list(figure.frames)
+            frame_duration = 1000
+        else:
+            play_frames = list(figure.frames[::3])
+            if play_frames[-1].name != figure.frames[-1].name:
+                play_frames.append(figure.frames[-1])
+            frame_duration = 750
+        play_button.args = [
+            [frame.name for frame in play_frames],
+            {
+                "frame": {"duration": frame_duration, "redraw": True},
+                "mode": "afterall",
+                "fromcurrent": False,
+                "transition": {"duration": 0},
+            },
+        ]
+    if figure.layout.sliders:
+        slider = figure.layout.sliders[0]
+        slider.update(
+            x=0.12,
+            len=0.82,
+            xanchor="left",
+            pad={"t": 45, "b": 10},
+            currentvalue={
+                "prefix": "Time (in minutes): ",
+                "visible": True,
+                "xanchor": "left",
+                "font": {"size": 14},
+            },
+            font={"size": 11},
+        )
+        for step in slider.steps:
+            step.args[1]["frame"] = {"duration": 0, "redraw": True}
+            step.args[1]["transition"] = {"duration": 0}
+    if figure.layout.updatemenus:
+        figure.layout.updatemenus[0].update(
+            x=0.02,
+            xanchor="left",
+            pad={"t": 45, "r": 8},
+        )
+    return figure
 
 def create_heatmap(network, variable):
     """Creates an animated heatmap for with a capability to drilldown on a specific point."""
@@ -796,20 +960,30 @@ def aggregate_outputs(
     net_df = _parse_net_xml(net_path)
     xml_output_files = glob.glob(f"{full_output_folder}/*.xml")
     print(f"Found {len(xml_output_files)} XML output files in {full_output_folder}.")
+
+    output_names = {
+        "edge_noise": "edge_noise_results",
+        "emission": "emission_results",
+        "trip": "trip_results",
+    }
+
+
     for filename in xml_output_files:
         print(f"Processing {filename}...")
         file_without_extension = filename.split(".")[0]
 
         if "edge_noise" in filename:
             result = _parse_edge_noise_xml(filename, net_df)
-        elif "trip" in filename:
-            result = _parse_trip_output_xml(filename)
+            output_name = output_names["edge_noise"]
         elif "emission" in filename:
             result = _parse_emissions_xml(filename, net_df)
+            output_name = output_names["emission"]
+        elif "trip" in filename:
+            result = _parse_trip_output_xml(filename)
+            output_name = output_names["trip"]
         else:
             continue
 
-        output_name = os.path.splitext(os.path.basename(filename))[0]
         csv_path = os.path.join(full_output_folder, f"{output_name}.csv")
 
         result.to_csv(csv_path, index=False)

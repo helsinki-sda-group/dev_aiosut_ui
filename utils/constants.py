@@ -52,7 +52,7 @@ AREAS = [
     {"label": "Arabia", "value": "arabia", "disabled": True},
     {"label": "Jätkäsaari", "value": "high", "disabled": True},
     {"label": "Kamppi", "value": "kamppi"},
-    {"label": "Vihdintie", "value": "vihdintie", "disabled": True},
+    {"label": "Vihdintie", "value": "vihdintie"},
 ]
 TIMELINE_FUNCTIONS = [
     {"label": "Average", "value": "mean"},
@@ -65,6 +65,13 @@ AQ_VARIABLES = [
     {"label": "Nitrogen oxides", "value": "Nitrogen oxides"},
     {"label": "Respirable particles", "value": "Respirable particles"},
     {"label": "Fine particles", "value": "Fine particles", "disabled": True},
+]
+CELL_AQ_VARIABLES = [
+    {"label": variable, "value": variable}
+    for variable in (
+        "AQI", "cnc_PM2_5", "cnc_PM10", "cnc_NO2_gas",
+        "cnc_O3_gas", "cnc_CO_gas", "cnc_BC", "LDSA",
+    )
 ]
 TRAFFIC_VARIABLES = [
     {"label": "Mobility flow", "value": "Mobility flow"},
@@ -95,6 +102,14 @@ UNITS = {
     "Nitrogen oxides": "mg",
     "Respirable particles": "µg",
     "Fine particles": "µg",
+    "AQI": "",
+    "cnc_PM2_5": "µg/m³",
+    "cnc_PM10": "µg/m³",
+    "cnc_NO2_gas": "µg/m³",
+    "cnc_O3_gas": "µg/m³",
+    "cnc_CO_gas": "µg/m³",
+    "cnc_BC": "µg/m³",
+    "LDSA": "µm²/cm³",
 }
 
 # From variable-situation-to-dataset-columns mapping for filtering

@@ -4,6 +4,10 @@ AioSUT is a RCF-funded project about developing an AI-based optimization tool fo
 
 ## User Guide
 
+Run the visualization with the existing edge-based air-quality view using
+`python -m new_app --edge` (also the default), or with polygon cell results from
+`emission_results_cells.csv` and `AQ_grid.geojson` using `python -m new_app --cell`.
+
 1. Install the following pre-requisites:
    - **Python**: Download the latest Python from [Python's official website](https://www.python.org/downloads/). Pip is recommended as the package installer.
    - **Simulation for Urban MObility (SUMO)**: Follow the installation instructions from [SUMO's official website.](https://www.eclipse.org/sumo/)
@@ -49,7 +53,7 @@ The UI reads pre-processed `.csv.gz` files from `simulation/scenarios/<area>/<sc
 
 SUMO must be installed and the `SUMO_HOME` environment variable must point to its installation directory. The simulation is run for 3600 seconds (1 hour) at 1-second time resolution. It produces two raw XML output files in the scenario output folder:
 
-- `emission_results.xml` — per-vehicle, per-second emissions (CO₂, CO, HC, NOx, PMx), speed, noise, fuel/electricity consumption, and vehicle class.
+- `emission_results.xml` — per-vehicle, per-second emissions (CO₂‚, CO, HC, NOx, PMx), speed, noise, fuel/electricity consumption, and vehicle class.
 - `trip_results.xml` — per-trip travel time, lost time, and route information.
 - `edge_noise_results.xml` — per-edge noise levels aggregated by the `add.xml` additional file.
 
@@ -80,7 +84,7 @@ This function:
 
 The resulting `.csv.gz` files have **1-second time resolution** (`Simulation timestep` column in seconds) and are what the UI loads at runtime. The UI then re-bins the data into the user-selected temporal resolution (1 min, 15 min, 30 min, or 60 min) on the fly.
 
-Script `utils/aggregate_outputs_cli.py` can be used to produce `csv` and `csv.gz` files through command line from the existing SUMO outputs.
+Script `utils/aggregate_outputs_cli.py` can be used to produce `csv` and `csv.gz` files through command line from the existing SUMO outputs. In this case, files will be read from and write to `--sumo-xml-folder` path.
 
 #### Expected folder structure
 

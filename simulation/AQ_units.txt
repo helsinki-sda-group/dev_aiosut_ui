@@ -1,0 +1,10 @@
+observable_units = [
+    ("AQI",         "1"),          # dimensionless air-quality index, scale 1–5
+    ("cnc_PM2_5",   "µg/m³"),
+    ("cnc_PM10",    "µg/m³"),
+    ("cnc_NO2_gas", "µg/m³"),
+    ("cnc_O3_gas",  "µg/m³"),
+    ("cnc_CO_gas",  "µg/m³"),
+    ("cnc_BC",      "µg/m³"),
+    ("LDSA",        "µm²/cm³"),
+]
