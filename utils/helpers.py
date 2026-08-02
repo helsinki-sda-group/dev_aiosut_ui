@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 import gzip
 import traci
 import shutil
+import json
 
 # Hover layout
 hover_layout = dict(bgcolor="white", font_size=16)
@@ -168,6 +169,110 @@ def get_data(
         )
     return dataset
 
+
+def get_cell_aq_data(
+    area="kamppi", demand="regular", season="summer", time="weekday",
+    situation="baseline", optimization=0, variable="AQI",
+):
+    """Load minute-resolution air-quality values and their cell geometry."""
+    scenario_dir = os.path.join(
+        "simulation", "scenarios", area.lower(),
+        f"{demand.lower()}_{season.lower()}_{time.lower()}",
+    )
+    result_dir = situation.lower()
+    if result_dir == "optimized":
+        result_dir += f"_{uc.OPTIMIZATION_SLIDER_VALUES[optimization]}"
+    csv_path = os.path.join(scenario_dir, result_dir, "emission_results_cells.csv")
+    if not os.path.exists(csv_path) and os.path.exists(csv_path + ".gz"):
+        csv_path += ".gz"
+    data = read_data(csv_path)
+    required = {"time", "cell_id", variable}
+    missing = required.difference(data.columns)
+    if missing:
+        raise ValueError(f"Missing columns in {csv_path}: {', '.join(sorted(missing))}")
+
+    # Only the minute component matters: 08:58 and 00:58 both map to minute 58.
+    parsed_time = pd.to_datetime(data["time"], errors="raise")
+    data = data[["cell_id", variable]].copy()
+    data["Minute"] = parsed_time.dt.minute
+
+    grid_candidates = [
+        os.path.join(scenario_dir, "AQ_grid.geojson"),
+        os.path.join("simulation", "scenarios", area.lower(), "AQ_grid.geojson"),
+    ]
+    grid_path = next((path for path in grid_candidates if os.path.exists(path)), None)
+    if grid_path is None:
+        raise FileNotFoundError("AQ_grid.geojson not found in the scenario or area folder")
+    with open(grid_path, encoding="utf-8") as grid_file:
+        grid = json.load(grid_file)
+    return data, grid
+
+
+def aggregate_cell_aq(data, variable, timestep_range, aggregation):
+    """Aggregate cells into minute, quarter, half-hour, or hour bins."""
+    data = data.copy()
+    data["Timestep"] = (data["Minute"] // timestep_range + 1) * timestep_range
+    return (
+        data.groupby(["Timestep", "cell_id"], observed=False)[variable]
+        .agg(aggregation)
+        .reset_index()
+    )
+
+
+def create_cell_heatmap(network, grid, variable):
+    """Create an animated polygon heatmap using Plotly's native controls."""
+    color_min = network[variable].min()
+    color_max = network[variable].max()
+    figure = px.choropleth_map(
+        network,
+        geojson=grid,
+        locations="cell_id",
+        featureidkey="properties.cell_id",
+        color=variable,
+        animation_frame="Timestep",
+        animation_group="cell_id",
+        map_style="open-street-map",
+        opacity=0.8,
+        color_continuous_scale="RdYlGn_r",
+        range_color=(color_min, color_max),
+        labels={variable: uc.UNITS[variable], "cell_id": "Cell"},
+        title=f"{variable} cell heatmap",
+    )
+    points = [point for feature in grid["features"]
+              for ring in feature["geometry"]["coordinates"] for point in ring]
+    west, east = min(p[0] for p in points), max(p[0] for p in points)
+    south, north = min(p[1] for p in points), max(p[1] for p in points)
+    figure.update_layout(
+        map={
+            "center": {"lon": (west + east) / 2, "lat": (south + north) / 2},
+            "zoom": 12.0,
+        },
+        width=800,
+        height=850,
+        autosize=False,
+        margin={"l": 0, "r": 0, "t": 50, "b": 0},
+        title_x=0.5,
+        map_uirevision="cell-aq",
+    )
+    figure.update_coloraxes(
+        colorbar_title_text=uc.UNITS[variable],
+        colorbar_len=0.72,
+        colorbar_thickness=24,
+    )
+
+    # Plotly requires full redraws for choropleth/map animation frames. Preserve
+    # its native controls and change only the frame options they generated.
+    if figure.layout.updatemenus:
+        for button in figure.layout.updatemenus[0].buttons:
+            if button.method == "animate" and button.args and button.args[0] is None:
+                button.args[1]["frame"] = {"duration": 600, "redraw": True}
+                button.args[1]["fromcurrent"] = True
+                button.args[1]["transition"] = {"duration": 0}
+    if figure.layout.sliders:
+        for step in figure.layout.sliders[0].steps:
+            step.args[1]["frame"] = {"duration": 0, "redraw": True}
+            step.args[1]["transition"] = {"duration": 0}
+    return figure
 
 def create_heatmap(network, variable):
     """Creates an animated heatmap for with a capability to drilldown on a specific point."""

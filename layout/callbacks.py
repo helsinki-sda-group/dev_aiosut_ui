@@ -9,7 +9,7 @@ basic_style = {"paddingTop": "2vh", "paddingBottom": "2vh"}
 empty_style = {"display": "none"}
 
 
-def register_callbacks(app):
+def register_callbacks(app, visualization_mode="edge"):
     @app.callback(
         Output("project-info-collapse", "is_open"),
         Input("project-info-button", "n_clicks"),
@@ -85,53 +85,37 @@ def register_callbacks(app):
             Output("situation-div", "style"),
             Output("variable-div", "style"),
             Output("crossfilter-variable", "options"),
-            # Output("timestep-div", "style"),
-            # Output("timeline-div", "style"),
             Output("visualize-button", "style"),
+            Output("crossfilter-situation", "value"),
+            Output("crossfilter-variable", "value"),
+            Output("crossfilter-timestep", "value"),
+            Output("crossfilter-timeline-type", "value"),
         ],
         Input("results-tabs", "value"),
     )
     def show_viz_parameters(tab):
+        defaults = ["baseline", None, 1, "mean"]
         if tab == lc.OBJECTIVES[1]:
             return [
-                basic_style,
-                basic_style,
-                basic_style,
+                basic_style, basic_style, basic_style,
                 uc.TRAFFIC_VARIABLES,
-                # basic_style,
-                # basic_style,
                 {"fontSize": "1.2em"},
+                "baseline", "Mobility flow", 1, "mean",
             ]
         elif tab == lc.OBJECTIVES[2]:
+            aq_default = "AQI" if visualization_mode == "cell" else "Carbon monoxide"
             return [
-                basic_style,
-                basic_style,
-                basic_style,
-                uc.AQ_VARIABLES,
-                # basic_style,
-                # basic_style,
+                basic_style, basic_style, basic_style,
+                (uc.CELL_AQ_VARIABLES if visualization_mode == "cell" else uc.AQ_VARIABLES),
                 {"fontSize": "1.2em"},
+                "baseline", aq_default, 1, "mean",
             ]
         elif tab == lc.OBJECTIVES[3]:
             return [
-                basic_style,
-                basic_style,
-                empty_style,
-                empty_style,
-                # empty_style,
-                # empty_style,
-                {"fontSize": "1.2em"},
+                basic_style, basic_style, empty_style, [],
+                {"fontSize": "1.2em"}, *defaults,
             ]
-        else:
-            return [
-                empty_style,
-                empty_style,
-                empty_style,
-                empty_style,
-                # empty_style,
-                # empty_style,
-                empty_style,
-            ]
+        return [empty_style, empty_style, empty_style, [], empty_style, *defaults]
 
     @app.callback(
         [
@@ -753,6 +737,27 @@ def register_callbacks(app):
                 )
             # AQ variables
             elif tab == lc.OBJECTIVES[2]:
+                if visualization_mode == "cell":
+                    network, grid = uh.get_cell_aq_data(
+                        area=area, season=season, time=time, demand=demand,
+                        optimization=traffic_priority, situation=situation,
+                        variable=variable,
+                    )
+                    heatmap_network = uh.aggregate_cell_aq(
+                        network, variable, timestep_range, timeline_type
+                    )
+                    heatmap = uh.create_cell_heatmap(heatmap_network, grid, variable)
+                    first_plot = dcc.Graph(
+                        figure=heatmap,
+                        responsive=False,
+                        style={
+                            "height": "850px",
+                            "width": "800px",
+                            "margin": "0 auto",
+                            "paddingBottom": "2vh",
+                        },
+                    )
+                    return [first_plot, second_plot, third_plot, fourth_plot, summary_text]
                 # Calculate the data
                 network = uh.get_data(
                     area=area,
