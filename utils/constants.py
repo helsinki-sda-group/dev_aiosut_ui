@@ -102,7 +102,7 @@ UNITS = {
     "Nitrogen oxides": "mg",
     "Respirable particles": "µg",
     "Fine particles": "µg",
-    "AQI": "1",
+    "AQI": "",
     "cnc_PM2_5": "µg/m³",
     "cnc_PM10": "µg/m³",
     "cnc_NO2_gas": "µg/m³",

@@ -747,12 +747,73 @@ def register_callbacks(app, visualization_mode="edge"):
                         network, variable, timestep_range, timeline_type
                     )
                     heatmap = uh.create_cell_heatmap(heatmap_network, grid, variable)
-                    first_plot = dcc.Graph(
-                        figure=heatmap,
-                        responsive=False,
+                    legend_min = float(heatmap_network[variable].min())
+                    legend_max = float(heatmap_network[variable].max())
+                    if legend_min == legend_max:
+                        legend_padding = abs(legend_min) * 0.01 or 0.01
+                        legend_min -= legend_padding
+                        legend_max += legend_padding
+                    legend_ticks = np.linspace(legend_max, legend_min, 6)
+                    legend = html.Div(
+                        [
+                            html.Div(
+                                uc.UNITS[variable],
+                                style={
+                                    "height": "24px",
+                                    "textAlign": "center",
+                                    "fontSize": "13px",
+                                },
+                            ),
+                            html.Div(
+                                [
+                                    html.Div(
+                                        style={
+                                            "width": "24px",
+                                            "height": "500px",
+                                            "background": (
+                                                "linear-gradient(to bottom, #a50026 0%, "
+                                                "#f46d43 20%, #fee08b 40%, #ffffbf 50%, "
+                                                "#d9ef8b 65%, #66bd63 82%, #006837 100%)"
+                                            ),
+                                        }
+                                    ),
+                                    html.Div(
+                                        [html.Span(f"{tick:.4g}") for tick in legend_ticks],
+                                        style={
+                                            "height": "500px",
+                                            "display": "flex",
+                                            "flexDirection": "column",
+                                            "justifyContent": "space-between",
+                                            "paddingLeft": "8px",
+                                            "fontSize": "12px",
+                                        },
+                                    ),
+                                ],
+                                style={"display": "flex"},
+                            ),
+                        ],
                         style={
+                            "width": "85px",
+                            "marginTop": "115px",
+                            "marginLeft": "12px",
+                            "flex": "0 0 85px",
+                        },
+                    )
+                    first_plot = html.Div(
+                        [
+                            dcc.Graph(
+                                figure=heatmap,
+                                responsive=False,
+                                style={"height": "850px", "width": "800px"},
+                            ),
+                            legend,
+                        ],
+                        style={
+                            "display": "flex",
+                            "alignItems": "flex-start",
+                            "justifyContent": "center",
+                            "width": "900px",
                             "height": "850px",
-                            "width": "800px",
                             "margin": "0 auto",
                             "paddingBottom": "2vh",
                         },

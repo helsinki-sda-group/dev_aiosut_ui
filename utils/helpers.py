@@ -221,8 +221,8 @@ def aggregate_cell_aq(data, variable, timestep_range, aggregation):
 
 def create_cell_heatmap(network, grid, variable):
     """Create an animated polygon heatmap using Plotly's native controls."""
-    color_min = network[variable].min()
-    color_max = network[variable].max()
+    color_min = float(network[variable].min())
+    color_max = float(network[variable].max())
     figure = px.choropleth_map(
         network,
         geojson=grid,
@@ -254,24 +254,77 @@ def create_cell_heatmap(network, grid, variable):
         title_x=0.5,
         map_uirevision="cell-aq",
     )
+    # Lock the full-hour color axis and its tick grid. Explicit cmin/cmax and
+    # tick values prevent frame redraws from recalculating the legend geometry.
+    if color_min == color_max:
+        padding = abs(color_min) * 0.01 or 0.01
+        color_min -= padding
+        color_max += padding
+    color_ticks = np.linspace(color_min, color_max, 6)
     figure.update_coloraxes(
+        cmin=color_min,
+        cmax=color_max,
+        cauto=False,
         colorbar_title_text=uc.UNITS[variable],
         colorbar_len=0.72,
         colorbar_thickness=24,
+        colorbar_tickmode="array",
+        colorbar_tickvals=color_ticks.tolist(),
+        colorbar_ticktext=[f"{value:.4g}" for value in color_ticks],
+        colorbar_x=1.0,
+        colorbar_xanchor="right",
+        colorbar_y=0.5,
+        colorbar_yanchor="middle",
+        showscale=False,
     )
 
-    # Plotly requires full redraws for choropleth/map animation frames. Preserve
-    # its native controls and change only the frame options they generated.
-    if figure.layout.updatemenus:
-        for button in figure.layout.updatemenus[0].buttons:
-            if button.method == "animate" and button.args and button.args[0] is None:
-                button.args[1]["frame"] = {"duration": 600, "redraw": True}
-                button.args[1]["fromcurrent"] = True
-                button.args[1]["transition"] = {"duration": 0}
+    # The legend is rendered outside this figure so it is never part of a map
+    # frame redraw. Hide it in both the initial trace and every frame.
+    figure.update_traces(showscale=False)
+    for frame in figure.frames:
+        for trace in frame.data:
+            trace.showscale = False
+
+    # Map traces need full redraws. Enumerating frame names makes the native Play
+    # button advance the same frames used by manual slider selection.
+    if figure.layout.updatemenus and figure.frames:
+        play_button = figure.layout.updatemenus[0].buttons[0]
+        play_frames = list(figure.frames[::3])
+        if play_frames[-1].name != figure.frames[-1].name:
+            play_frames.append(figure.frames[-1])
+        play_button.args = [
+            [frame.name for frame in play_frames],
+            {
+                "frame": {"duration": 750, "redraw": True},
+                "mode": "afterall",
+                "fromcurrent": False,
+                "transition": {"duration": 0},
+            },
+        ]
     if figure.layout.sliders:
-        for step in figure.layout.sliders[0].steps:
+        slider = figure.layout.sliders[0]
+        slider.update(
+            x=0.12,
+            len=0.82,
+            xanchor="left",
+            pad={"t": 45, "b": 10},
+            currentvalue={
+                "prefix": "Time (in minutes): ",
+                "visible": True,
+                "xanchor": "left",
+                "font": {"size": 14},
+            },
+            font={"size": 11},
+        )
+        for step in slider.steps:
             step.args[1]["frame"] = {"duration": 0, "redraw": True}
             step.args[1]["transition"] = {"duration": 0}
+    if figure.layout.updatemenus:
+        figure.layout.updatemenus[0].update(
+            x=0.02,
+            xanchor="left",
+            pad={"t": 45, "r": 8},
+        )
     return figure
 
 def create_heatmap(network, variable):
