@@ -252,7 +252,6 @@ def create_cell_heatmap(network, grid, variable):
         autosize=False,
         margin={"l": 0, "r": 0, "t": 50, "b": 0},
         title_x=0.5,
-        map_uirevision="cell-aq",
     )
     # Lock the full-hour color axis and its tick grid. Explicit cmin/cmax and
     # tick values prevent frame redraws from recalculating the legend geometry.
