@@ -97,6 +97,18 @@ def read_data(path):
     return data
 
 
+def _result_data_path(output_dir, dataset_name, suffix=None):
+    """Return an available result file, preferring preprocessed minute data."""
+    suffixes = [suffix] if suffix is not None else ["_res1min", ""]
+    for candidate_suffix in suffixes:
+        for extension in (".csv.gz", ".csv"):
+            path = os.path.join(output_dir, f"{dataset_name}{candidate_suffix}{extension}")
+            if os.path.exists(path):
+                return path, candidate_suffix
+    expected = os.path.join(output_dir, f"{dataset_name}{suffix or ''}.csv.gz")
+    raise FileNotFoundError(expected)
+
+
 # Datasets and column types
 def get_data(
     area="kamppi",
@@ -107,56 +119,40 @@ def get_data(
     optimization=0,
     variable="Mobility flow",
 ):
-    """
-    Slices the required data from the dataset written on the disk.
-    """
+    """Load visualization data, preferring 1-minute preprocessed results."""
     dataset_name, dataset_cols = uc.FROM_VAR_TO_DATA_COLS[variable]
-    if situation.lower() == "optimized":
-        output_path = os.path.join(
-            # ".",
-            "simulation",
-            "scenarios",
-            f"{area.lower()}",
-            f"{demand.lower()}_{season.lower()}_{time.lower()}",
-            f"{situation.lower()}_{uc.OPTIMIZATION_SLIDER_VALUES[optimization]}",
-            f"{dataset_name}.csv.gz",
-        )
-    else:
-        output_path = os.path.join(
-            # ".",
-            "simulation",
-            "scenarios",
-            f"{area.lower()}",
-            f"{demand.lower()}_{season.lower()}_{time.lower()}",
-            f"{situation.lower()}",
-            f"{dataset_name}.csv.gz",
-        )
-    dataset = read_data(output_path)[dataset_cols]
-    # print(dataset.head())
+    result_dir = situation.lower()
+    if result_dir == "optimized":
+        result_dir += f"_{uc.OPTIMIZATION_SLIDER_VALUES[optimization]}"
+    output_dir = os.path.join(
+        "simulation", "scenarios", area.lower(),
+        f"{demand.lower()}_{season.lower()}_{time.lower()}", result_dir,
+    )
+
+    # Noise needs mobility flow from the emissions dataset. Only use minute noise
+    # when its matching minute emissions file exists, so the merge stays aligned.
     if "noise" in dataset_name:
         helper_dataset_name, _ = uc.FROM_VAR_TO_DATA_COLS["Carbon dioxide"]
-        if situation == "optimized":
-            helper_output_path = os.path.join(
-                # ".",
-                "simulation",
-                "scenarios",
-                f"{area.lower()}",
-                f"{demand.lower()}_{season.lower()}_{time.lower()}",
-                f"{situation.lower()}_{uc.OPTIMIZATION_SLIDER_VALUES[optimization]}",
-                f"{helper_dataset_name}.csv.gz",
-            )
-        else:
-            helper_output_path = os.path.join(
-                # ".",
-                "simulation",
-                "scenarios",
-                f"{area.lower()}",
-                f"{demand.lower()}_{season.lower()}_{time.lower()}",
-                f"{situation.lower()}",
-                f"{helper_dataset_name}.csv.gz",
-            )
-        helper_dataset = read_data(helper_output_path)
-        helper_dataset = helper_dataset[
+        minute_noise = os.path.exists(
+            os.path.join(output_dir, f"{dataset_name}_res1min.csv.gz")
+        ) or os.path.exists(os.path.join(output_dir, f"{dataset_name}_res1min.csv"))
+        minute_emissions = os.path.exists(
+            os.path.join(output_dir, f"{helper_dataset_name}_res1min.csv.gz")
+        ) or os.path.exists(os.path.join(output_dir, f"{helper_dataset_name}_res1min.csv"))
+        preferred_suffix = "_res1min" if minute_noise and minute_emissions else ""
+    else:
+        preferred_suffix = None
+
+    output_path, used_suffix = _result_data_path(
+        output_dir, dataset_name, preferred_suffix
+    )
+    dataset = read_data(output_path)[dataset_cols]
+
+    if "noise" in dataset_name:
+        helper_output_path, _ = _result_data_path(
+            output_dir, helper_dataset_name, used_suffix
+        )
+        helper_dataset = read_data(helper_output_path)[
             ["Simulation timestep", "Edge", "Mobility flow"]
         ]
         helper_dataset = (
@@ -951,10 +947,103 @@ def _modify_config(
         f.write(config_str)
 
 
+def _aggregate_result_resolution(data, dataset_name, resolution_mins):
+    """Aggregate a SUMO result DataFrame to fixed-width minute buckets."""
+    if "Simulation timestep" not in data.columns:
+        raise ValueError(f"{dataset_name} has no Simulation timestep column")
+    data = data.copy()
+    bucket_seconds = resolution_mins * 60
+    data["Simulation timestep"] = (
+        np.floor(data["Simulation timestep"] / bucket_seconds) * bucket_seconds
+    ).astype(int)
+
+    if dataset_name == "emission_results":
+        required = {"Edge", "Vehicle"}
+        missing = required.difference(data.columns)
+        if missing:
+            raise ValueError(
+                f"{dataset_name} is missing required columns: {', '.join(sorted(missing))}"
+            )
+        group_columns = [
+            column for column in
+            ["Simulation timestep", "Edge", "Vehicle", "Mobility mode"]
+            if column in data.columns
+        ]
+        sum_columns = [
+            column for column in [
+                "Mobility flow", "Carbon dioxide", "Carbon monoxide",
+                "Hydrocarbon", "Nitrogen oxides", "Respirable particles",
+                "Fine particles", "Fuel", "Electricity",
+            ] if column in data.columns
+        ]
+        mean_columns = [
+            column for column in ["Speed", "Noise"] if column in data.columns
+        ]
+        first_columns = [
+            column for column in ["Longitude", "Latitude", "Name", "Route", "Class"]
+            if column in data.columns
+        ]
+        aggregations = {
+            **{column: "sum" for column in sum_columns},
+            **{column: "mean" for column in mean_columns},
+            **{column: "first" for column in first_columns},
+        }
+    elif dataset_name == "edge_noise_results":
+        if "Edge" not in data.columns or "Noise" not in data.columns:
+            raise ValueError(f"{dataset_name} requires Edge and Noise columns")
+        group_columns = ["Simulation timestep", "Edge"]
+        aggregations = {"Noise": "mean"}
+        aggregations.update({
+            column: "first" for column in ["Longitude", "Latitude", "Name"]
+            if column in data.columns
+        })
+    else:
+        raise ValueError(f"Unsupported resolution dataset: {dataset_name}")
+
+    return (
+        data.groupby(group_columns, observed=True, dropna=False)
+        .agg(aggregations)
+        .reset_index()
+    )
+
+
+def preprocess_output_resolution(full_output_folder, resolution_mins=1):
+    """Create compressed, lower-resolution emissions and edge-noise CSV files."""
+    if not isinstance(resolution_mins, int) or resolution_mins <= 0:
+        raise ValueError("resolution_mins must be a positive integer")
+
+    created_paths = []
+    suffix = f"_res{resolution_mins}min"
+    for dataset_name in ("emission_results", "edge_noise_results"):
+        source_path = None
+        for extension in (".csv.gz", ".csv"):
+            candidate = os.path.join(full_output_folder, f"{dataset_name}{extension}")
+            if os.path.exists(candidate):
+                source_path = candidate
+                break
+        if source_path is None:
+            print(f"Skipping {dataset_name}: source CSV not found in {full_output_folder}.")
+            continue
+
+        print(f"Aggregating {source_path} to {resolution_mins}-minute resolution...")
+        result = _aggregate_result_resolution(
+            read_data(source_path), dataset_name, resolution_mins
+        )
+        output_path = os.path.join(
+            full_output_folder, f"{dataset_name}{suffix}.csv.gz"
+        )
+        result.to_csv(output_path, index=False, compression="gzip")
+        created_paths.append(output_path)
+        print(f"Wrote {output_path} ({len(result)} rows).")
+
+    return created_paths
+
+
 def aggregate_outputs(
     net_path="simulation/scenarios/kamppi/baseline_net.xml",
     full_output_folder="simulation/scenarios/kamppi/regular_summer_weekday/optimized_equal",
     erase_xml=False,
+    resolution_mins=None,
 ):
     # Convert the output files of raw xml to gzipped csv
     net_df = _parse_net_xml(net_path)
@@ -995,6 +1084,9 @@ def aggregate_outputs(
 
         if erase_xml:
             os.remove(filename)
+
+    if resolution_mins is not None:
+        preprocess_output_resolution(full_output_folder, resolution_mins)
 
 
 # Simulate
