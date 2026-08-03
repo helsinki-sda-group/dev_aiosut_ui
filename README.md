@@ -1,4 +1,4 @@
-# dev_aiosut_ui
+﻿# dev_aiosut_ui
 
 AioSUT is a RCF-funded project about developing an AI-based optimization tool for city planning. In this repository reisdes the development code for the AioSUT tool's user interface.
 
@@ -82,9 +82,23 @@ This function:
    - Saves the result as a gzip-compressed CSV (`.csv.gz`) alongside the original XML.
    - Deletes the raw XML file if `erase_xml=True`.
 
-The resulting `.csv.gz` files have **1-second time resolution** (`Simulation timestep` column in seconds) and are what the UI loads at runtime. The UI then re-bins the data into the user-selected temporal resolution (1 min, 15 min, 30 min, or 60 min) on the fly.
+The resulting `.csv.gz` files have **1-second time resolution** (`Simulation timestep` column in seconds) and are what the UI loads at runtime. The UI then re-bins the data into the user-selected temporal resolution (1 min, 15 min, 30 min, or 60 min) on the fly. If 1-second time resolution becomes too slow for the on-the-fly visualization, use `utils.aggregate_outputs_cli` with parameters `--resolution-mins 1` to create preprocessed files with 1-minute resolution (see below).
 
 Script `utils/aggregate_outputs_cli.py` can be used to produce `csv` and `csv.gz` files through command line from the existing SUMO outputs. In this case, files will be read from and write to `--sumo-xml-folder` path.
+
+To create the faster one-minute files while converting XML, pass `--resolution-mins 1`:
+
+```shell
+python -m utils.aggregate_outputs_cli --sumo-net-path <network.xml> --sumo-xml-folder <output-folder> --resolution-mins 1
+```
+
+To preprocess existing one-second CSV or CSV.GZ files without reading XML, use:
+
+```shell
+python -m utils.aggregate_outputs_cli --sumo-xml-folder <output-folder> --preprocess-only --resolution-mins 1
+```
+
+This writes `emission_results_res1min.csv.gz` and `edge_noise_results_res1min.csv.gz`. Emissions are grouped per vehicle, edge, mobility mode, and minute: additive values such as emissions and mobility flow are summed, while speed and noise are averaged. Edge noise is averaged per edge and minute. The UI automatically prefers a complete matching pair of one-minute noise/emissions files and otherwise falls back to the original files, so existing scenarios remain compatible. The underscore spelling `--resolution_mins` is also accepted.
 
 #### Expected folder structure
 
