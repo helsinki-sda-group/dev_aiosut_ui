@@ -173,6 +173,23 @@ def register_callbacks(app, visualization_mode="edge"):
         timeline_type,
         timestep_range,
     ):
+        # Changing tabs updates the variable dropdown in a separate callback. Dash
+        # may invoke this callback first, leaving ``variable`` set to the value from
+        # the previous tab (for example, "Mobility flow" when opening Air quality).
+        # Normalize it here so data loading never receives a variable for the wrong
+        # objective.
+        if tab == lc.OBJECTIVES[1]:
+            valid_variables = {option["value"] for option in uc.TRAFFIC_VARIABLES}
+            if variable not in valid_variables:
+                variable = "Mobility flow"
+        elif tab == lc.OBJECTIVES[2]:
+            aq_variables = (
+                uc.CELL_AQ_VARIABLES if visualization_mode == "cell" else uc.AQ_VARIABLES
+            )
+            valid_variables = {option["value"] for option in aq_variables}
+            if variable not in valid_variables:
+                variable = "cnc_PM2_5" if visualization_mode == "cell" else "Carbon monoxide"
+
         params = [
             season,
             time,
