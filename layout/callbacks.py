@@ -377,6 +377,10 @@ def register_callbacks(app, visualization_mode="edge"):
                 situation=situation,
                 variable=variable,
             )
+            # SUMO writes undeparted trips with zero duration. Exclude them from
+            # both travel-time and lost-time plots while retaining departed trips
+            # that legitimately have zero lost time.
+            network = network[network["Travel time"] > 0]
             # Draw the histogram
             histogram = uh.create_mobility_mode_histogram(
                 network=network, variable=variable

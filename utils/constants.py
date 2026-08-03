@@ -148,7 +148,7 @@ FROM_VAR_TO_DATA_COLS = {
     ),
     "Lost time": (
         "trip_results",
-        ["Mobility mode", "Lost time", "Mobility flow"],
+        ["Mobility mode", "Lost time", "Travel time", "Mobility flow"],
     ),
     "Noise": (
         "edge_noise_results",
