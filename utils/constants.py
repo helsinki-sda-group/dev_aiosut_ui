@@ -15,12 +15,10 @@ OBJECTIVES = [
     "Air quality",
     "Livability",
 ]
-# Marks and values for optimization sliders
-OPTIMIZATION_SLIDER_MARKS = {0: "Equal", 1: "First", 2: "Second"}
-OPTIMIZATION_SLIDER_VALUES = {
-    0: "equal",
-    1: "traffic1",
-    2: "traffic2",
+# Allowed objective weights. Traffic and air-quality weights are complementary.
+OPTIMIZATION_SLIDER_VALUES = (0, 0.3, 0.5, 0.7, 1)
+OPTIMIZATION_SLIDER_MARKS = {
+    value: f"{value:g}" for value in OPTIMIZATION_SLIDER_VALUES
 }
 TIMESTEPS = [
     {"label": "Minutes", "value": 1},
