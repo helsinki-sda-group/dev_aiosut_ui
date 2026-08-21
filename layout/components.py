@@ -18,7 +18,7 @@ empty_style = {"display": "none"}
 external_stylesheets = [dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP]
 
 
-def _optimization_row(objective, icon_class):
+def _optimization_row(objective, component_id, icon_class):
     return dbc.Row(
         [
             dbc.Col(
@@ -31,7 +31,7 @@ def _optimization_row(objective, icon_class):
                         html.Label(
                             objective,
                             style={"fontSize": "1.2em"},
-                            htmlFor=f"{objective.lower()}-priority",
+                            htmlFor=component_id,
                         ),
                     ]
                 ),
@@ -43,15 +43,15 @@ def _optimization_row(objective, icon_class):
                         dcc.Slider(
                             step=None,
                             marks={
-                                i: {
-                                    "label": f"{OPTIMIZATION_SLIDER_MARKS[i]}",
+                                value: {
+                                    "label": label,
                                     "style": {"fontSize": "1.2em"},
                                 }
-                                for i in range(len(OPTIMIZATION_SLIDER_MARKS))
+                                for value, label in OPTIMIZATION_SLIDER_MARKS.items()
                             },
-                            value=0,
-                            id=f"{objective.lower()}-priority",
-                            disabled=True,
+                            value=0.5,
+                            id=component_id,
+                            disabled=False,
                         ),
                     ]
                 ),
@@ -394,16 +394,16 @@ optimization_sliders = html.Div(
     [
         _optimization_row(
             objective=OBJECTIVES[1],
+            component_id="traffic-priority",
             icon_class="bi bi-car-front-fill",
         ),
         _optimization_row(
             objective=OBJECTIVES[2],
+            component_id="air-quality-priority",
             icon_class="bi bi-wind",
         ),
-        _optimization_row(
-            objective=OBJECTIVES[3],
-            icon_class="bi bi-house-heart-fill",
-        ),
+        # Livability priority is intentionally hidden while only two objectives
+        # participate in the optimization weights.
     ],
 )
 

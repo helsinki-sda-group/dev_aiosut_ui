@@ -14,9 +14,35 @@ import gzip
 import traci
 import shutil
 import json
+import re
 
 # Hover layout
 hover_layout = dict(bgcolor="white", font_size=16)
+
+OPTIMIZED_FOLDER_RE = re.compile(r"^optimized_T(0|30|50|70|100)_AQ(0|30|50|70|100)$")
+
+
+def optimization_folder(traffic_weight):
+    """Return the result-folder name for a pair of complementary weights."""
+    traffic_percent = round(float(traffic_weight) * 100)
+    air_quality_percent = 100 - traffic_percent
+    return f"optimized_T{traffic_percent}_AQ{air_quality_percent}"
+
+
+def available_optimization_weights(area):
+    """Find valid Traffic weights in optimized result folders for an area."""
+    area_dir = os.path.join("simulation", "scenarios", str(area).lower())
+    available = set()
+    if not os.path.isdir(area_dir):
+        return []
+    for _, directory_names, _ in os.walk(area_dir):
+        for directory_name in directory_names:
+            match = OPTIMIZED_FOLDER_RE.fullmatch(directory_name)
+            if match and int(match.group(1)) + int(match.group(2)) == 100:
+                weight = int(match.group(1)) / 100
+                if weight in uc.OPTIMIZATION_SLIDER_VALUES:
+                    available.add(weight)
+    return sorted(available)
 
 
 def new_timeline(network, timestep_range):
@@ -123,7 +149,7 @@ def get_data(
     dataset_name, dataset_cols = uc.FROM_VAR_TO_DATA_COLS[variable]
     result_dir = situation.lower()
     if result_dir == "optimized":
-        result_dir += f"_{uc.OPTIMIZATION_SLIDER_VALUES[optimization]}"
+        result_dir = optimization_folder(optimization)
     output_dir = os.path.join(
         "simulation", "scenarios", area.lower(),
         f"{demand.lower()}_{season.lower()}_{time.lower()}", result_dir,
@@ -177,7 +203,7 @@ def get_cell_aq_data(
     )
     result_dir = situation.lower()
     if result_dir == "optimized":
-        result_dir += f"_{uc.OPTIMIZATION_SLIDER_VALUES[optimization]}"
+        result_dir = optimization_folder(optimization)
     csv_path = os.path.join(scenario_dir, result_dir, "emission_results_cells.csv")
     if not os.path.exists(csv_path) and os.path.exists(csv_path + ".gz"):
         csv_path += ".gz"

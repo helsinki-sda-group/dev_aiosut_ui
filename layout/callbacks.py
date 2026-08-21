@@ -1,4 +1,4 @@
-from dash import Input, Output, State, dcc, html
+from dash import Input, Output, State, ctx, dcc, html
 import utils.helpers as uh
 import utils.constants as uc
 import layout.components as lc
@@ -10,6 +10,67 @@ empty_style = {"display": "none"}
 
 
 def register_callbacks(app, visualization_mode="edge"):
+    @app.callback(
+        Output("traffic-priority", "value"),
+        Output("air-quality-priority", "value"),
+        Output("traffic-priority", "marks"),
+        Output("air-quality-priority", "marks"),
+        Output("traffic-priority", "disabled"),
+        Output("air-quality-priority", "disabled"),
+        Input("crossfilter-area", "value"),
+        Input("traffic-priority", "value"),
+        Input("air-quality-priority", "value"),
+    )
+    def synchronize_optimization_weights(area, traffic_weight, air_quality_weight):
+        available_traffic = uh.available_optimization_weights(area)
+        if not available_traffic:
+            return 0.5, 0.5, {}, {}, True, True
+
+        triggered = ctx.triggered_id
+        if triggered == "air-quality-priority":
+            requested_traffic = round(1 - float(air_quality_weight), 1)
+        elif triggered == "traffic-priority":
+            requested_traffic = float(traffic_weight)
+        else:
+            requested_traffic = 0.5
+
+        if requested_traffic not in available_traffic:
+            requested_traffic = min(
+                available_traffic, key=lambda value: abs(value - requested_traffic)
+            )
+        selected_air_quality = round(1 - requested_traffic, 1)
+        available_air_quality = {
+            round(1 - value, 1) for value in available_traffic
+        }
+        traffic_marks = {
+            value: {
+                "label": label,
+                "style": {
+                    "fontSize": "1.2em",
+                    "color": "inherit" if value in available_traffic else "#b8b8b8",
+                },
+            }
+            for value, label in uc.OPTIMIZATION_SLIDER_MARKS.items()
+        }
+        air_quality_marks = {
+            value: {
+                "label": label,
+                "style": {
+                    "fontSize": "1.2em",
+                    "color": "inherit" if value in available_air_quality else "#b8b8b8",
+                },
+            }
+            for value, label in uc.OPTIMIZATION_SLIDER_MARKS.items()
+        }
+        return (
+            requested_traffic,
+            selected_air_quality,
+            traffic_marks,
+            air_quality_marks,
+            False,
+            False,
+        )
+
     @app.callback(
         Output("project-info-collapse", "is_open"),
         Input("project-info-button", "n_clicks"),
