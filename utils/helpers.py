@@ -168,9 +168,9 @@ def get_data(
 
 def get_cell_aq_data(
     area="kamppi", demand="regular", season="summer", time="weekday",
-    situation="baseline", optimization=0, variable="AQI",
+    situation="baseline", optimization=0, variable="Carbon monoxide",
 ):
-    """Load minute-resolution air-quality values and their cell geometry."""
+    """Load SUMO cell values and their AQ-grid geometry."""
     scenario_dir = os.path.join(
         "simulation", "scenarios", area.lower(),
         f"{demand.lower()}_{season.lower()}_{time.lower()}",
@@ -181,16 +181,13 @@ def get_cell_aq_data(
     csv_path = os.path.join(scenario_dir, result_dir, "emission_results_cells.csv")
     if not os.path.exists(csv_path) and os.path.exists(csv_path + ".gz"):
         csv_path += ".gz"
-    data = read_data(csv_path)
-    required = {"time", "cell_id", variable}
-    missing = required.difference(data.columns)
+    source = read_data(csv_path)
+    required = {"Simulation timestep", "cell_id", variable}
+    missing = required.difference(source.columns)
     if missing:
         raise ValueError(f"Missing columns in {csv_path}: {', '.join(sorted(missing))}")
-
-    # Only the minute component matters: 08:58 and 00:58 both map to minute 58.
-    parsed_time = pd.to_datetime(data["time"], errors="raise")
-    data = data[["cell_id", variable]].copy()
-    data["Minute"] = parsed_time.dt.minute
+    data = source[["cell_id", variable]].copy()
+    data["Minute"] = np.floor(source["Simulation timestep"] / 60).astype(int)
 
     grid_candidates = [
         os.path.join(scenario_dir, "AQ_grid.geojson"),
@@ -202,7 +199,6 @@ def get_cell_aq_data(
     with open(grid_path, encoding="utf-8") as grid_file:
         grid = json.load(grid_file)
     return data, grid
-
 
 def aggregate_cell_aq(data, variable, timestep_range, aggregation):
     """Aggregate cells into minute, quarter, half-hour, or hour bins."""
@@ -1039,15 +1035,129 @@ def preprocess_output_resolution(full_output_folder, resolution_mins=1):
     return created_paths
 
 
+def _point_in_ring(longitude, latitude, ring):
+    """Return whether a point is inside or on the boundary of a GeoJSON ring."""
+    inside = False
+    for first, second in zip(ring, ring[1:] + ring[:1]):
+        x1, y1 = first[:2]
+        x2, y2 = second[:2]
+        cross = (longitude - x1) * (y2 - y1) - (latitude - y1) * (x2 - x1)
+        if (abs(cross) < 1e-12 and min(x1, x2) <= longitude <= max(x1, x2)
+                and min(y1, y2) <= latitude <= max(y1, y2)):
+            return True
+        if (y1 > latitude) != (y2 > latitude):
+            intersection = x1 + (latitude - y1) * (x2 - x1) / (y2 - y1)
+            if longitude < intersection:
+                inside = not inside
+    return inside
+
+
+def _point_in_geometry(longitude, latitude, geometry):
+    """Support Polygon and MultiPolygon geometries without a GIS dependency."""
+    polygons = geometry["coordinates"]
+    if geometry["type"] == "Polygon":
+        polygons = [polygons]
+    elif geometry["type"] != "MultiPolygon":
+        raise ValueError(f"Unsupported AQ grid geometry: {geometry['type']}")
+    return any(
+        polygon and _point_in_ring(longitude, latitude, polygon[0])
+        and not any(_point_in_ring(longitude, latitude, hole) for hole in polygon[1:])
+        for polygon in polygons
+    )
+
+
+def aggregate_emissions_to_cells(emissions_path, grid_path, output_path):
+    """Spatially aggregate SUMO observables into all cells of an AQ grid."""
+    emissions = read_data(emissions_path)
+    required = {"Simulation timestep", "Longitude", "Latitude"}
+    missing = required.difference(emissions.columns)
+    if missing:
+        raise ValueError(f"emission_results is missing required columns: {', '.join(sorted(missing))}")
+    with open(grid_path, encoding="utf-8") as grid_file:
+        features = json.load(grid_file).get("features", [])
+    if not features:
+        raise ValueError(f"AQ grid contains no features: {grid_path}")
+
+    cells = []
+    for feature in features:
+        properties = feature.get("properties", {})
+        if "cell_id" not in properties:
+            raise ValueError("Every AQ grid feature must have properties.cell_id")
+        geometry = feature["geometry"]
+        points = []
+        def collect(value):
+            if value and isinstance(value[0], (int, float)):
+                points.append(value)
+            else:
+                for item in value:
+                    collect(item)
+        collect(geometry["coordinates"])
+        cells.append({
+            "cell_id": properties["cell_id"],
+            "cell_area_km2": properties.get("cell_area_km2"),
+            "longitude": sum(point[0] for point in points) / len(points),
+            "latitude": sum(point[1] for point in points) / len(points),
+            "geometry": geometry,
+            "bounds": (min(p[0] for p in points), min(p[1] for p in points),
+                       max(p[0] for p in points), max(p[1] for p in points)),
+        })
+
+    def locate(row):
+        longitude, latitude = row["Longitude"], row["Latitude"]
+        if pd.isna(longitude) or pd.isna(latitude):
+            return None
+        for cell in cells:
+            west, south, east, north = cell["bounds"]
+            if (west <= longitude <= east and south <= latitude <= north
+                    and _point_in_geometry(longitude, latitude, cell["geometry"])):
+                return cell["cell_id"]
+        return None
+
+    emissions = emissions.copy()
+    emissions["cell_id"] = emissions.apply(locate, axis=1)
+    outside_count = int(emissions["cell_id"].isna().sum())
+    emissions = emissions.dropna(subset=["cell_id"])
+    if emissions.empty:
+        raise ValueError("No emission result coordinates fall inside the AQ grid")
+    sum_columns = [column for column in [
+        "Mobility flow", "Carbon dioxide", "Carbon monoxide", "Hydrocarbon",
+        "Nitrogen oxides", "Respirable particles", "Fine particles", "Fuel", "Electricity",
+    ] if column in emissions.columns]
+    mean_columns = [column for column in ["Speed", "Noise"] if column in emissions.columns]
+    keys = ["Simulation timestep", "cell_id"]
+    grouped = emissions.groupby(keys, observed=True, dropna=False).agg({
+        **{column: "sum" for column in sum_columns},
+        **{column: "mean" for column in mean_columns},
+    })
+    grouped["point_count"] = emissions.groupby(keys, observed=True, dropna=False).size()
+    index = pd.MultiIndex.from_product(
+        [sorted(emissions["Simulation timestep"].unique()), [cell["cell_id"] for cell in cells]],
+        names=keys,
+    )
+    grouped = grouped.reindex(index).fillna(0).reset_index()
+    metadata = pd.DataFrame(cells).drop(columns=["geometry", "bounds"])
+    result = grouped.merge(metadata, on="cell_id", how="left")
+    ordered = ["Simulation timestep", "cell_id", "latitude", "longitude",
+               "cell_area_km2", "point_count", *sum_columns, *mean_columns]
+    result = result[ordered]
+    compression = "gzip" if str(output_path).endswith(".gz") else None
+    result.to_csv(output_path, index=False, compression=compression)
+    print(f"Wrote {output_path} ({len(result)} rows; {outside_count} source rows outside grid).")
+    return output_path
+
 def aggregate_outputs(
     net_path="simulation/scenarios/kamppi/baseline_net.xml",
     full_output_folder="simulation/scenarios/kamppi/regular_summer_weekday/optimized_equal",
     erase_xml=False,
     resolution_mins=None,
+    aq_grid_path=None,
 ):
     # Convert the output files of raw xml to gzipped csv
     net_df = _parse_net_xml(net_path)
-    xml_output_files = glob.glob(f"{full_output_folder}/*.xml")
+    xml_output_files = glob.glob(os.path.join(full_output_folder, "*.xml"))
+    xml_output_files += glob.glob(
+        os.path.join(full_output_folder, "sumo_output", "*.xml")
+    )
     print(f"Found {len(xml_output_files)} XML output files in {full_output_folder}.")
 
     output_names = {
@@ -1087,6 +1197,13 @@ def aggregate_outputs(
 
     if resolution_mins is not None:
         preprocess_output_resolution(full_output_folder, resolution_mins)
+    if aq_grid_path is not None:
+        suffix = f"_res{resolution_mins}min" if resolution_mins is not None else None
+        emissions_path, _ = _result_data_path(full_output_folder, "emission_results", suffix)
+        aggregate_emissions_to_cells(
+            emissions_path, aq_grid_path,
+            os.path.join(full_output_folder, "emission_results_cells.csv"),
+        )
 
 
 # Simulate

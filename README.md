@@ -41,6 +41,7 @@ The project follows a relaxed development pipeline by using issues, pull request
   - `functions.py` contains all the functions needed for runing SUMO simulations and fetching the results for visualization.
   - The sub-folders of the `simulation` folder, eg. `kamppi`, are area folders that contain the simulation configurations and simulation outputs for each area. The configurations consist mainly of three files:
     - the road network used in the simulation, `.net.xml`
+    - the grid boundary coordinates for `--cell` visualization mode, `AQ_grid.geojson`
     - the routes of the vehicles, `.rou.xml`
     - file configurations for the simulation, `.sumocfg`
     - In each area folder, there is a sub-folder `output` for the simulation outputs.
@@ -99,6 +100,10 @@ python -m utils.aggregate_outputs_cli --sumo-xml-folder <output-folder> --prepro
 ```
 
 This writes `emission_results_res1min.csv.gz` and `edge_noise_results_res1min.csv.gz`. Emissions are grouped per vehicle, edge, mobility mode, and minute: additive values such as emissions and mobility flow are summed, while speed and noise are averaged. Edge noise is averaged per edge and minute. The UI automatically prefers a complete matching pair of one-minute noise/emissions files and otherwise falls back to the original files, so existing scenarios remain compatible. The underscore spelling `--resolution_mins` is also accepted.
+
+Additionally, the file `emission_results_cells.csv` will be generated, using `AQ_grid.geojson` file with cell borders in a parent folder.
+
+> **Note**. Processing of `emission_results.xml` can take a long time (dozens of minutes) for a large number of cars or a long simulation period. 
 
 #### Expected folder structure
 

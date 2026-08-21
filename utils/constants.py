@@ -67,11 +67,7 @@ AQ_VARIABLES = [
     {"label": "Fine particles", "value": "Fine particles", "disabled": True},
 ]
 CELL_AQ_VARIABLES = [
-    {"label": variable, "value": variable}
-    for variable in (
-        "AQI", "cnc_PM2_5", "cnc_PM10", "cnc_NO2_gas",
-        "cnc_O3_gas", "cnc_CO_gas", "cnc_BC", "LDSA",
-    )
+    option.copy() for option in AQ_VARIABLES if not option.get("disabled")
 ]
 TRAFFIC_VARIABLES = [
     {"label": "Mobility flow", "value": "Mobility flow"},

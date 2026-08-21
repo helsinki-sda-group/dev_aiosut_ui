@@ -103,7 +103,7 @@ def register_callbacks(app, visualization_mode="edge"):
                 "baseline", "Mobility flow", 1, "mean",
             ]
         elif tab == lc.OBJECTIVES[2]:
-            aq_default = "cnc_PM2_5" if visualization_mode == "cell" else "Carbon monoxide"
+            aq_default = "Carbon monoxide"
             return [
                 basic_style, basic_style, basic_style,
                 (uc.CELL_AQ_VARIABLES if visualization_mode == "cell" else uc.AQ_VARIABLES),
@@ -188,7 +188,7 @@ def register_callbacks(app, visualization_mode="edge"):
             )
             valid_variables = {option["value"] for option in aq_variables}
             if variable not in valid_variables:
-                variable = "cnc_PM2_5" if visualization_mode == "cell" else "Carbon monoxide"
+                variable = "Carbon monoxide"
 
         params = [
             season,
