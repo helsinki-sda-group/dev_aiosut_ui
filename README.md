@@ -103,7 +103,11 @@ This writes `emission_results_res1min.csv.gz` and `edge_noise_results_res1min.cs
 
 Additionally, the file `emission_results_cells.csv` will be generated, using `AQ_grid.geojson` file with cell borders in a parent folder.
 
-> **Note**. Processing of `emission_results.xml` can take a long time (dozens of minutes) for a large number of cars or a long simulation period. 
+> **Note 1**. Processing of `emission_results.xml` can take a long time (dozens of minutes) for a large number of cars or a long simulation period. 
+
+> **Note 2**. If there is an error `pyproj.exceptions.CRSError: Invalid projection: UTM: (Internal Proj Error: proj_create: unrecognized format / unknown name)`, check `projParameter` of `<location>` tag of `net.xml` file. Modify as: `projParameter="+proj=utm +zone=35 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"` 
+
+> **Note 3**. For generating `emission_results_cells.csv` for non-default `sumo-net-path` and `sumo-xml-folder`, please specify `--aq-grid-path` path to  `AQ_grid.geojson`. By default, CLI checks for it in `sumo-xml-folder` and its parent folder.
 
 #### Expected folder structure
 
