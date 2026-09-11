@@ -353,22 +353,42 @@ simulation_info_collapse = dbc.Collapse(
 
 simulation_button = html.Div(
     [
-        html.Center(
-            dbc.Button(
-                html.Label(
-                    "Simulate",
-                    style={"fontSize": 18},
-                    htmlFor="simulate-button",
+        html.Div(
+            [
+                dbc.Button(
+                    html.Label(
+                        "Simulate",
+                        style={"fontSize": 18},
+                        htmlFor="simulate-button",
+                    ),
+                    size="lg",
+                    color="secondary",
+                    id="simulate-button",
+                    n_clicks=0,
+                    disabled=True,
                 ),
-                size="lg",
-                id="simulate-button",
-                n_clicks=0,
-                disabled=True,
-            ),
+                html.I(
+                    className="bi bi-question-circle",
+                    id="simulate-button-info",
+                    style={
+                        "fontSize": "1.2em",
+                        "marginLeft": "0.6em",
+                        "cursor": "help",
+                    },
+                ),
+                dbc.Tooltip(
+                    "Optimization results are currently precomputed. Interactive "
+                    "simulation will be enabled in a future version.",
+                    target="simulate-button-info",
+                    placement="right",
+                ),
+            ],
             style={
                 "paddingTop": "3vh",
                 "paddingBottom": "3vh",
-                "display": "block",
+                "display": "flex",
+                "alignItems": "center",
+                "justifyContent": "center",
             },
         ),
     ],
