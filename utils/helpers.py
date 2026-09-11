@@ -195,8 +195,9 @@ def get_data(
 def get_cell_aq_data(
     area="kamppi", demand="regular", season="summer", time="weekday",
     situation="baseline", optimization=0, variable="Carbon monoxide",
+    concentration=False,
 ):
-    """Load SUMO cell values and their AQ-grid geometry."""
+    """Load SUMO emissions or Enfuser concentrations and AQ-grid geometry."""
     scenario_dir = os.path.join(
         "simulation", "scenarios", area.lower(),
         f"{demand.lower()}_{season.lower()}_{time.lower()}",
@@ -204,16 +205,36 @@ def get_cell_aq_data(
     result_dir = situation.lower()
     if result_dir == "optimized":
         result_dir = optimization_folder(optimization)
-    csv_path = os.path.join(scenario_dir, result_dir, "emission_results_cells.csv")
+    filename = (
+        "concentration_results_cells.csv"
+        if concentration
+        else "emission_results_cells.csv"
+    )
+    csv_path = os.path.join(scenario_dir, result_dir, filename)
     if not os.path.exists(csv_path) and os.path.exists(csv_path + ".gz"):
         csv_path += ".gz"
     source = read_data(csv_path)
-    required = {"Simulation timestep", "cell_id", variable}
+    source_variable = variable
+    time_column = "Simulation timestep"
+    if concentration:
+        source_variable = {
+            "Fine particles": "cnc_PM2_5",
+            "Respirable particles": "cnc_PM10",
+            "Nitrogen oxides": "cnc_NO2_gas",
+        }.get(variable, variable)
+        time_column = "time"
+    required = {time_column, "cell_id", source_variable}
     missing = required.difference(source.columns)
     if missing:
         raise ValueError(f"Missing columns in {csv_path}: {', '.join(sorted(missing))}")
-    data = source[["cell_id", variable]].copy()
-    data["Minute"] = np.floor(source["Simulation timestep"] / 60).astype(int)
+    data = source[["cell_id", source_variable]].copy()
+    data = data.rename(columns={source_variable: variable})
+    if concentration:
+        timestamps = pd.to_datetime(source[time_column], errors="raise")
+        elapsed_seconds = (timestamps - timestamps.min()).dt.total_seconds()
+        data["Minute"] = np.floor(elapsed_seconds / 60).astype(int)
+    else:
+        data["Minute"] = np.floor(source[time_column] / 60).astype(int)
 
     grid_candidates = [
         os.path.join(scenario_dir, "AQ_grid.geojson"),
@@ -237,7 +258,7 @@ def aggregate_cell_aq(data, variable, timestep_range, aggregation):
     )
 
 
-def create_cell_heatmap(network, grid, variable):
+def create_cell_heatmap(network, grid, variable, unit=None):
     """Create an animated polygon heatmap using Plotly's native controls."""
     color_min = float(network[variable].min())
     color_max = float(network[variable].max())
@@ -253,7 +274,7 @@ def create_cell_heatmap(network, grid, variable):
         opacity=0.8,
         color_continuous_scale="RdYlGn_r",
         range_color=(color_min, color_max),
-        labels={variable: uc.UNITS[variable], "cell_id": "Cell"},
+        labels={variable: unit or uc.UNITS[variable], "cell_id": "Cell"},
         title=f"{variable} cell heatmap",
     )
     points = [point for feature in grid["features"]
@@ -282,7 +303,7 @@ def create_cell_heatmap(network, grid, variable):
         cmin=color_min,
         cmax=color_max,
         cauto=False,
-        colorbar_title_text=uc.UNITS[variable],
+        colorbar_title_text=unit or uc.UNITS[variable],
         colorbar_len=0.72,
         colorbar_thickness=24,
         colorbar_tickmode="array",

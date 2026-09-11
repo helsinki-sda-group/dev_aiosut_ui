@@ -9,7 +9,9 @@ basic_style = {"paddingTop": "2vh", "paddingBottom": "2vh"}
 empty_style = {"display": "none"}
 
 
-def register_callbacks(app, visualization_mode="edge", show_liv=False):
+def register_callbacks(
+    app, visualization_mode="edge", show_liv=False, concentration_mode=False
+):
     @app.callback(
         Output("traffic-priority", "value"),
         Output("air-quality-priority", "value"),
@@ -172,10 +174,18 @@ def register_callbacks(app, visualization_mode="edge", show_liv=False):
                 "baseline", "Mobility flow", 1, "mean",
             ]
         elif tab == lc.OBJECTIVES[2]:
-            aq_default = "Carbon monoxide"
+            if concentration_mode:
+                aq_variables = uc.CONCENTRATION_VARIABLES
+                aq_default = "Fine particles"
+            elif visualization_mode == "cell":
+                aq_variables = uc.CELL_AQ_VARIABLES
+                aq_default = "Carbon monoxide"
+            else:
+                aq_variables = uc.AQ_VARIABLES
+                aq_default = "Carbon monoxide"
             return [
                 basic_style, basic_style, basic_style,
-                (uc.CELL_AQ_VARIABLES if visualization_mode == "cell" else uc.AQ_VARIABLES),
+                aq_variables,
                 {"fontSize": "1.2em"},
                 "baseline", aq_default, 1, "mean",
             ]
@@ -185,6 +195,16 @@ def register_callbacks(app, visualization_mode="edge", show_liv=False):
                 {"fontSize": "1.2em"}, *defaults,
             ]
         return [empty_style, empty_style, empty_style, [], empty_style, *defaults]
+
+    if concentration_mode:
+        @app.callback(
+            Output("crossfilter-timeline-type", "options"),
+            Input("results-tabs", "value"),
+        )
+        def concentration_temporal_aggregation_options(tab):
+            if tab == lc.OBJECTIVES[2]:
+                return [{"label": "Average", "value": "mean"}]
+            return uc.TIMELINE_FUNCTIONS
 
     @app.callback(
         [
@@ -211,6 +231,7 @@ def register_callbacks(app, visualization_mode="edge", show_liv=False):
             Output("figure-three-div", "children"),
             Output("figure-four-div", "children"),
             Output("summary-text", "children"),
+            Output("visualization-error", "children"),
             # Output("location-text", "children"),
         ],
         [
@@ -252,9 +273,12 @@ def register_callbacks(app, visualization_mode="edge", show_liv=False):
             if variable not in valid_variables:
                 variable = "Mobility flow"
         elif tab == lc.OBJECTIVES[2]:
-            aq_variables = (
-                uc.CELL_AQ_VARIABLES if visualization_mode == "cell" else uc.AQ_VARIABLES
-            )
+            if concentration_mode:
+                aq_variables = uc.CONCENTRATION_VARIABLES
+            elif visualization_mode == "cell":
+                aq_variables = uc.CELL_AQ_VARIABLES
+            else:
+                aq_variables = uc.AQ_VARIABLES
             valid_variables = {option["value"] for option in aq_variables}
             if variable not in valid_variables:
                 variable = "Carbon monoxide"
@@ -277,6 +301,7 @@ def register_callbacks(app, visualization_mode="edge", show_liv=False):
         third_plot = []
         fourth_plot = []
         summary_text = []
+        visualization_error = []
         # current_location = """Location: Network"""
         # Summary
         if tab == lc.OBJECTIVES[0]:
@@ -828,15 +853,39 @@ def register_callbacks(app, visualization_mode="edge", show_liv=False):
             # AQ variables
             elif tab == lc.OBJECTIVES[2]:
                 if visualization_mode == "cell":
-                    network, grid = uh.get_cell_aq_data(
-                        area=area, season=season, time=time, demand=demand,
-                        optimization=traffic_priority, situation=situation,
-                        variable=variable,
-                    )
+                    is_concentration = concentration_mode
+                    try:
+                        network, grid = uh.get_cell_aq_data(
+                            area=area, season=season, time=time, demand=demand,
+                            optimization=traffic_priority, situation=situation,
+                            variable=variable,
+                            concentration=is_concentration,
+                        )
+                    except FileNotFoundError:
+                        if not is_concentration:
+                            raise
+                        visualization_error = (
+                            "No air quality concentration results are available "
+                            "for the selected scenario and parameters."
+                        )
+                        return [
+                            first_plot,
+                            second_plot,
+                            third_plot,
+                            fourth_plot,
+                            summary_text,
+                            visualization_error,
+                        ]
                     heatmap_network = uh.aggregate_cell_aq(
-                        network, variable, timestep_range, timeline_type
+                        network,
+                        variable,
+                        timestep_range,
+                        "mean" if is_concentration else timeline_type,
                     )
-                    heatmap = uh.create_cell_heatmap(heatmap_network, grid, variable)
+                    display_unit = "µg/m³" if is_concentration else uc.UNITS[variable]
+                    heatmap = uh.create_cell_heatmap(
+                        heatmap_network, grid, variable, unit=display_unit
+                    )
                     legend_min = float(heatmap_network[variable].min())
                     legend_max = float(heatmap_network[variable].max())
                     if legend_min == legend_max:
@@ -847,7 +896,7 @@ def register_callbacks(app, visualization_mode="edge", show_liv=False):
                     legend = html.Div(
                         [
                             html.Div(
-                                uc.UNITS[variable],
+                                display_unit,
                                 style={
                                     "height": "24px",
                                     "textAlign": "center",
@@ -908,7 +957,14 @@ def register_callbacks(app, visualization_mode="edge", show_liv=False):
                             "paddingBottom": "2vh",
                         },
                     )
-                    return [first_plot, second_plot, third_plot, fourth_plot, summary_text]
+                    return [
+                        first_plot,
+                        second_plot,
+                        third_plot,
+                        fourth_plot,
+                        summary_text,
+                        visualization_error,
+                    ]
                 # Calculate the data
                 network = uh.get_data(
                     area=area,
@@ -1025,6 +1081,7 @@ def register_callbacks(app, visualization_mode="edge", show_liv=False):
             fourth_plot,
             # current_location,
             summary_text,
+            visualization_error,
         ]
 
     # @app.callback(

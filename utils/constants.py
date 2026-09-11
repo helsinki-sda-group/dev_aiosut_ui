@@ -67,6 +67,11 @@ AQ_VARIABLES = [
 CELL_AQ_VARIABLES = [
     option.copy() for option in AQ_VARIABLES if not option.get("disabled")
 ]
+CONCENTRATION_VARIABLES = [
+    {"label": "PM2.5 (Fine particles)", "value": "Fine particles"},
+    {"label": "PM10 (Respirable particles)", "value": "Respirable particles"},
+    {"label": "NO2 (Nitrogen oxides)", "value": "Nitrogen oxides"},
+]
 TRAFFIC_VARIABLES = [
     {"label": "Mobility flow", "value": "Mobility flow"},
     {"label": "Speed", "value": "Speed"},

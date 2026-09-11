@@ -835,14 +835,21 @@ def _viz_parameters_section():
                 style=basic_style,
             ),
             html.Center(
-                dbc.Button(
-                    "Visualize",
-                    id="visualize-button",
-                    className="mb-3 d-md-block",
-                    color="primary",
-                    n_clicks=0,
-                    style={"fontSize": "1.2em"},
-                ),
+                [
+                    dbc.Button(
+                        "Visualize",
+                        id="visualize-button",
+                        className="mb-3 d-md-block",
+                        color="primary",
+                        n_clicks=0,
+                        style={"fontSize": "1.2em"},
+                    ),
+                    html.Div(
+                        id="visualization-error",
+                        role="alert",
+                        style={"color": "red", "fontSize": "1.1em"},
+                    ),
+                ],
                 style={"paddingTop": "4vh", "paddingBottom": "3vh"},
             ),
         ],

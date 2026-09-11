@@ -103,6 +103,19 @@ This writes `emission_results_res1min.csv.gz` and `edge_noise_results_res1min.cs
 
 Additionally, the file `emission_results_cells.csv` will be generated, using `AQ_grid.geojson` file with cell borders in a parent folder.
 
+To visualize precomputed Enfuser concentrations, place
+`concentration_results_cells.csv` in the scenario result folder and run:
+
+```shell
+python -m new_app --cell --concentration
+```
+
+The concentration file uses its `time` timestamps at one-minute resolution and
+the `cnc_PM2_5`, `cnc_PM10`, and `cnc_NO2_gas` columns. The UI displays these as
+PM2.5, PM10, and NO2 in µg/m³ and uses the same `AQ_grid.geojson` lookup as the
+cell-emissions mode. Concentrations are averaged, rather than summed, when a
+coarser temporal resolution is selected.
+
 > **Note 1**. Processing of `emission_results.xml` can take a long time (dozens of minutes) for a large number of cars or a long simulation period. 
 
 > **Note 2**. If there is an error `pyproj.exceptions.CRSError: Invalid projection: UTM: (Internal Proj Error: proj_create: unrecognized format / unknown name)`, check `projParameter` of `<location>` tag of `net.xml` file. Modify as: `projParameter="+proj=utm +zone=35 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"` 
