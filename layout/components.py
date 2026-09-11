@@ -18,7 +18,9 @@ empty_style = {"display": "none"}
 external_stylesheets = [dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP]
 
 
-def _optimization_row(objective, component_id, icon_class):
+def _optimization_row(
+    objective, component_id, icon_class, disabled=False, label_suffix=None
+):
     return dbc.Row(
         [
             dbc.Col(
@@ -29,7 +31,11 @@ def _optimization_row(objective, component_id, icon_class):
                             style={"paddingRight": "2em", "fontSize": "1.5em"},
                         ),
                         html.Label(
-                            objective,
+                            (
+                                [objective, label_suffix]
+                                if label_suffix is not None
+                                else objective
+                            ),
                             style={"fontSize": "1.2em"},
                             htmlFor=component_id,
                         ),
@@ -51,7 +57,7 @@ def _optimization_row(objective, component_id, icon_class):
                             },
                             value=0.5,
                             id=component_id,
-                            disabled=False,
+                            disabled=disabled,
                         ),
                     ]
                 ),
@@ -390,8 +396,8 @@ optimization_header = html.Div(
     style=basic_style,
 )
 
-optimization_sliders = html.Div(
-    [
+def _optimization_sliders(show_liv=False):
+    rows = [
         _optimization_row(
             objective=OBJECTIVES[1],
             component_id="traffic-priority",
@@ -402,10 +408,34 @@ optimization_sliders = html.Div(
             component_id="air-quality-priority",
             icon_class="bi bi-wind",
         ),
-        # Livability priority is intentionally hidden while only two objectives
-        # participate in the optimization weights.
-    ],
-)
+    ]
+    if show_liv:
+        info_icon = html.I(
+            className="bi bi-question-circle",
+            id="livability-priority-info",
+            style={"marginLeft": "0.4em", "cursor": "help"},
+        )
+        rows.append(
+            html.Div(
+                [
+                    _optimization_row(
+                        objective=OBJECTIVES[3],
+                        component_id="livability-priority",
+                        icon_class="bi bi-house-heart-fill",
+                        disabled=True,
+                        label_suffix=info_icon,
+                    ),
+                    dbc.Tooltip(
+                        "In the current implementation, livability is derived from "
+                        "the Air Quality indicator, so both objectives share the same "
+                        "priority.",
+                        target="livability-priority-info",
+                        placement="right",
+                    ),
+                ]
+            )
+        )
+    return html.Div(rows)
 
 results_heading_col = dbc.Col(
     html.Div(
@@ -737,14 +767,14 @@ def _project_section():
     )
 
 
-def _simulation_parameters_section():
+def _simulation_parameters_section(show_liv=False):
     return html.Div(
         [
             simulation_header_row,
             simulation_info_collapse,
             scenario_parameter_row,
             optimization_header,
-            optimization_sliders,
+            _optimization_sliders(show_liv=show_liv),
             simulation_button,
             html.Hr(),
         ],
@@ -839,11 +869,11 @@ def _plots_section():
     )
 
 
-def app_layout():
+def app_layout(show_liv=False):
     return html.Div(
         [
             _project_section(),
-            _simulation_parameters_section(),
+            _simulation_parameters_section(show_liv=show_liv),
             _results_section(),
             _viz_parameters_section(),
             dcc.Loading(

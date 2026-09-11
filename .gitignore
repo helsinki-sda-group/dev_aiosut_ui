@@ -10,3 +10,4 @@ mini_app.py
 !*.csv.gz
 !simulation/scenarios/all_scenarios.csv
 .pytest_cache
+testing/test_show_liv.py

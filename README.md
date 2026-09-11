@@ -6,7 +6,7 @@ AioSUT is a RCF-funded project about developing an AI-based optimization tool fo
 
 Run the visualization with the existing edge-based air-quality view using
 `python -m new_app --edge` (also the default), or with polygon cell results from
-`emission_results_cells.csv` and `AQ_grid.geojson` using `python -m new_app --cell`.
+`emission_results_cells.csv` and `AQ_grid.geojson` using `python -m new_app --cell`. Check `commands.sh` for more examples of commands.
 
 1. Install the following pre-requisites:
    - **Python**: Download the latest Python from [Python's official website](https://www.python.org/downloads/). Pip is recommended as the package installer.

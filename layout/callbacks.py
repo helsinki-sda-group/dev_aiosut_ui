@@ -9,7 +9,7 @@ basic_style = {"paddingTop": "2vh", "paddingBottom": "2vh"}
 empty_style = {"display": "none"}
 
 
-def register_callbacks(app, visualization_mode="edge"):
+def register_callbacks(app, visualization_mode="edge", show_liv=False):
     @app.callback(
         Output("traffic-priority", "value"),
         Output("air-quality-priority", "value"),
@@ -70,6 +70,14 @@ def register_callbacks(app, visualization_mode="edge"):
             False,
             False,
         )
+
+    if show_liv:
+        @app.callback(
+            Output("livability-priority", "value"),
+            Input("air-quality-priority", "value"),
+        )
+        def synchronize_livability_display(air_quality_weight):
+            return air_quality_weight
 
     @app.callback(
         Output("project-info-collapse", "is_open"),

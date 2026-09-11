@@ -6,7 +6,7 @@ from layout.components import app_layout
 from layout.callbacks import register_callbacks
 
 
-def create_app(visualization_mode="edge"):
+def create_app(visualization_mode="edge", show_liv=False):
     app = Dash(
         __name__,
         external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
@@ -15,8 +15,10 @@ def create_app(visualization_mode="edge"):
             {"name": "viewport", "content": "width=device-width, initial-scale=1"},
         ],
     )
-    app.layout = app_layout()
-    register_callbacks(app, visualization_mode=visualization_mode)
+    app.layout = app_layout(show_liv=show_liv)
+    register_callbacks(
+        app, visualization_mode=visualization_mode, show_liv=show_liv
+    )
     app.title = "AIOSut"
     return app
 
@@ -32,6 +34,11 @@ def parse_args(args=None):
         "--cell", action="store_const", const="cell", dest="mode",
         help="visualize air quality using AQ grid cells",
     )
+    parser.add_argument(
+        "--show-liv",
+        action="store_true",
+        help="show the read-only livability priority derived from air quality",
+    )
     parser.set_defaults(mode="edge")
     return parser.parse_args(args)
 
@@ -42,4 +49,4 @@ server = app.server
 
 if __name__ == "__main__":
     cli_args = parse_args()
-    create_app(cli_args.mode).run(debug=True)
+    create_app(cli_args.mode, show_liv=cli_args.show_liv).run(debug=True)
